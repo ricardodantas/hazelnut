@@ -150,12 +150,19 @@ pub fn detect_package_manager() -> PackageManager {
 
 /// Run the update command and return the result
 pub fn run_update(pm: PackageManager) -> Result<(), String> {
+    use std::process::Stdio;
+
     let (cmd, args): (&str, Vec<&str>) = match pm {
         PackageManager::Cargo => ("cargo", vec!["install", "hazelnut"]),
         PackageManager::Homebrew => ("brew", vec!["upgrade", "hazelnut"]),
     };
 
-    match std::process::Command::new(cmd).args(&args).status() {
+    match std::process::Command::new(cmd)
+        .args(&args)
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .status()
+    {
         Ok(status) if status.success() => Ok(()),
         Ok(status) => Err(format!("Update failed with status: {}", status)),
         Err(e) => Err(format!("Failed to run {}: {}", cmd, e)),
