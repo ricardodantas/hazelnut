@@ -140,13 +140,12 @@ impl PackageManager {
 
 /// Detect how hazelnut was installed
 pub fn detect_package_manager() -> PackageManager {
-    // Check if installed via Homebrew (macOS)
-    if let Ok(output) = std::process::Command::new("brew")
-        .args(["list", "hazelnut"])
-        .output()
-        && output.status.success()
-    {
-        return PackageManager::Homebrew;
+    // Check if the current executable is in Homebrew's Cellar
+    if let Ok(exe_path) = std::env::current_exe() {
+        let exe_str = exe_path.to_string_lossy();
+        if exe_str.contains("/Cellar/") || exe_str.contains("/homebrew/") {
+            return PackageManager::Homebrew;
+        }
     }
 
     // Default to cargo
