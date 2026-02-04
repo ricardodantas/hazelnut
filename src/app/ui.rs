@@ -188,7 +188,7 @@ fn render_dashboard(frame: &mut Frame, state: &AppState, area: Rect) {
     let (logo_area, content_area) = if has_update {
         // Render update banner
         if let Some(ref latest) = state.update_available {
-            let pm = state.package_manager;
+            let pm = &state.package_manager;
             let banner = Paragraph::new(Line::from(vec![
                 Span::styled("  ⬆️  ", Style::default().fg(colors.warning)),
                 Span::styled("Update available: ", colors.text()),
@@ -1649,7 +1649,7 @@ fn render_update_confirm_dialog(frame: &mut Frame, state: &AppState) {
     frame.render_widget(ratatui::widgets::Clear, popup_area);
 
     let latest = state.update_available.as_deref().unwrap_or("unknown");
-    let pm = state.package_manager;
+    let pm = &state.package_manager;
 
     let lines = vec![
         Line::from(""),

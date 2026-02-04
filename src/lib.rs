@@ -110,10 +110,10 @@ pub fn expand_path(path: &std::path::Path) -> std::path::PathBuf {
 }
 
 /// Detected package manager for installation
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PackageManager {
     Cargo,
-    Homebrew,
+    Homebrew { formula: String },
 }
 
 impl PackageManager {
@@ -121,15 +121,15 @@ impl PackageManager {
     pub fn name(&self) -> &'static str {
         match self {
             PackageManager::Cargo => "cargo",
-            PackageManager::Homebrew => "brew",
+            PackageManager::Homebrew { .. } => "brew",
         }
     }
 
     /// Get the update command
-    pub fn update_command(&self) -> &'static str {
+    pub fn update_command(&self) -> String {
         match self {
-            PackageManager::Cargo => "cargo install hazelnut",
-            PackageManager::Homebrew => "brew upgrade hazelnut",
+            PackageManager::Cargo => "cargo install hazelnut".to_string(),
+            PackageManager::Homebrew { formula } => format!("brew upgrade {}", formula),
         }
     }
 }
@@ -139,8 +139,28 @@ pub fn detect_package_manager() -> PackageManager {
     // Check if the current executable is in Homebrew's Cellar
     if let Ok(exe_path) = std::env::current_exe() {
         let exe_str = exe_path.to_string_lossy();
+
+        // Path looks like: /opt/homebrew/Cellar/hazelnut/0.2.16/bin/hazelnut
+        // or for taps: /opt/homebrew/Cellar/hazelnut/0.2.16/bin/hazelnut (same location)
         if exe_str.contains("/Cellar/") || exe_str.contains("/homebrew/") {
-            return PackageManager::Homebrew;
+            // Try to get the full formula name from brew
+            if let Ok(output) = std::process::Command::new("brew")
+                .args(["info", "--json=v2", "hazelnut"])
+                .output()
+                && output.status.success()
+                && let Ok(json) = serde_json::from_slice::<serde_json::Value>(&output.stdout)
+                && let Some(formulae) = json.get("formulae").and_then(|f| f.as_array())
+                && let Some(formula) = formulae.first()
+                && let Some(full_name) = formula.get("full_name").and_then(|n| n.as_str())
+            {
+                return PackageManager::Homebrew {
+                    formula: full_name.to_string(),
+                };
+            }
+            // Fallback to just "hazelnut" if we can't determine the tap
+            return PackageManager::Homebrew {
+                formula: "hazelnut".to_string(),
+            };
         }
     }
 
@@ -149,16 +169,20 @@ pub fn detect_package_manager() -> PackageManager {
 }
 
 /// Run the update command and return the result
-pub fn run_update(pm: PackageManager) -> Result<(), String> {
+pub fn run_update(pm: &PackageManager) -> Result<(), String> {
     use std::process::Stdio;
 
-    let (cmd, args): (&str, Vec<&str>) = match pm {
-        PackageManager::Cargo => ("cargo", vec!["install", "hazelnut"]),
-        PackageManager::Homebrew => ("brew", vec!["upgrade", "hazelnut"]),
+    let (cmd, args): (&str, Vec<String>) = match pm {
+        PackageManager::Cargo => ("cargo", vec!["install".to_string(), "hazelnut".to_string()]),
+        PackageManager::Homebrew { formula } => {
+            ("brew", vec!["upgrade".to_string(), formula.clone()])
+        }
     };
 
+    let args_ref: Vec<&str> = args.iter().map(|s| s.as_str()).collect();
+
     match std::process::Command::new(cmd)
-        .args(&args)
+        .args(&args_ref)
         .stdout(Stdio::null())
         .stderr(Stdio::null())
         .status()
