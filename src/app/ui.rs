@@ -530,13 +530,15 @@ fn render_status_bar(frame: &mut Frame, state: &AppState, area: Rect) {
         vec![
             Span::styled(" ", Style::default()),
             Span::styled("Tab", colors.key_hint()),
-            Span::styled(": switch views  ", colors.text_muted()),
+            Span::styled(": views  ", colors.text_muted()),
             Span::styled("?", colors.key_hint()),
             Span::styled(": help  ", colors.text_muted()),
             Span::styled("s", colors.key_hint()),
             Span::styled(": settings  ", colors.text_muted()),
             Span::styled("t", colors.key_hint()),
             Span::styled(": theme  ", colors.text_muted()),
+            Span::styled("A", colors.key_hint()),
+            Span::styled(": about  ", colors.text_muted()),
             Span::styled("q", colors.key_hint()),
             Span::styled(": quit", colors.text_muted()),
         ]
@@ -618,7 +620,7 @@ fn render_help_popup(frame: &mut Frame, state: &AppState) {
             Span::styled("Open theme selector", colors.text()),
         ]),
         Line::from(vec![
-            Span::styled("  Ctrl+a             ", colors.key_hint()),
+            Span::styled("  A                  ", colors.key_hint()),
             Span::styled("About Tidy", colors.text()),
         ]),
         Line::from(vec![

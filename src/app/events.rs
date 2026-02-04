@@ -101,7 +101,7 @@ pub fn handle_key(state: &mut AppState, key: KeyEvent) {
             return;
         }
         // About dialog
-        (KeyModifiers::CONTROL, KeyCode::Char('a')) => {
+        (_, KeyCode::Char('A')) => {
             state.mode = Mode::About;
             return;
         }

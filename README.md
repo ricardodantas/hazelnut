@@ -494,7 +494,9 @@ args = ["{path}", "-quality", "80", "{path}"]
 | `Tab` | Next view |
 | `Shift+Tab` | Previous view |
 | `1` `2` `3` `4` | Jump to view (Dashboard, Rules, Watches, Log) |
+| `s` | Open settings |
 | `t` | Open theme picker |
+| `A` | About Tidy |
 | `?` / `F1` | Show help |
 | `q` | Quit (from Dashboard) |
 | `Ctrl+c` / `Ctrl+q` | Force quit |
