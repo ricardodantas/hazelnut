@@ -168,7 +168,7 @@ fn render_dashboard(frame: &mut Frame, state: &AppState, area: Rect) {
 
     // Check if we need to show update banner
     let has_update = state.update_available.is_some();
-    
+
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints(if has_update {
@@ -192,18 +192,30 @@ fn render_dashboard(frame: &mut Frame, state: &AppState, area: Rect) {
             let banner = Paragraph::new(Line::from(vec![
                 Span::styled("  ⬆️  ", Style::default().fg(colors.warning)),
                 Span::styled("Update available: ", colors.text()),
-                Span::styled(format!("v{}", latest), Style::default().fg(colors.warning).add_modifier(Modifier::BOLD)),
+                Span::styled(
+                    format!("v{}", latest),
+                    Style::default()
+                        .fg(colors.warning)
+                        .add_modifier(Modifier::BOLD),
+                ),
                 Span::styled(" (current: ", colors.text_muted()),
                 Span::styled(format!("v{})", crate::VERSION), colors.text_muted()),
                 Span::styled(" — Press ", colors.text_muted()),
-                Span::styled("[U]", Style::default().fg(colors.primary).add_modifier(Modifier::BOLD)),
+                Span::styled(
+                    "[U]",
+                    Style::default()
+                        .fg(colors.primary)
+                        .add_modifier(Modifier::BOLD),
+                ),
                 Span::styled(format!(" to update via {}", pm.name()), colors.text_muted()),
             ]))
             .alignment(Alignment::Center)
-            .block(Block::default()
-                .borders(Borders::ALL)
-                .border_type(BorderType::Rounded)
-                .border_style(Style::default().fg(colors.warning)));
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .border_type(BorderType::Rounded)
+                    .border_style(Style::default().fg(colors.warning)),
+            );
             frame.render_widget(banner, chunks[0]);
         }
         (chunks[1], chunks[2])
@@ -1643,7 +1655,12 @@ fn render_update_confirm_dialog(frame: &mut Frame, state: &AppState) {
         Line::from(""),
         Line::from(vec![
             Span::styled("Update to ", colors.text()),
-            Span::styled(format!("v{}", latest), Style::default().fg(colors.warning).add_modifier(Modifier::BOLD)),
+            Span::styled(
+                format!("v{}", latest),
+                Style::default()
+                    .fg(colors.warning)
+                    .add_modifier(Modifier::BOLD),
+            ),
             Span::styled("?", colors.text()),
         ]),
         Line::from(""),
@@ -1654,7 +1671,12 @@ fn render_update_confirm_dialog(frame: &mut Frame, state: &AppState) {
         Line::from(""),
         Line::from(""),
         Line::from(vec![
-            Span::styled(" [Y] ", Style::default().fg(colors.success).add_modifier(Modifier::BOLD)),
+            Span::styled(
+                " [Y] ",
+                Style::default()
+                    .fg(colors.success)
+                    .add_modifier(Modifier::BOLD),
+            ),
             Span::raw("Yes, update"),
             Span::raw("    "),
             Span::styled(" [N/Esc] ", colors.text_muted()),
@@ -1662,21 +1684,19 @@ fn render_update_confirm_dialog(frame: &mut Frame, state: &AppState) {
         ]),
     ];
 
-    let paragraph = Paragraph::new(lines)
-        .alignment(Alignment::Center)
-        .block(
-            Block::default()
-                .borders(Borders::ALL)
-                .border_type(BorderType::Rounded)
-                .border_style(Style::default().fg(colors.warning))
-                .style(Style::default().bg(colors.bg))
-                .title(" ⬆️ Update Hazelnut ")
-                .title_style(
-                    Style::default()
-                        .fg(colors.warning)
-                        .add_modifier(Modifier::BOLD),
-                ),
-        );
+    let paragraph = Paragraph::new(lines).alignment(Alignment::Center).block(
+        Block::default()
+            .borders(Borders::ALL)
+            .border_type(BorderType::Rounded)
+            .border_style(Style::default().fg(colors.warning))
+            .style(Style::default().bg(colors.bg))
+            .title(" ⬆️ Update Hazelnut ")
+            .title_style(
+                Style::default()
+                    .fg(colors.warning)
+                    .add_modifier(Modifier::BOLD),
+            ),
+    );
 
     frame.render_widget(paragraph, popup_area);
 }
@@ -1695,7 +1715,11 @@ fn render_update_status(frame: &mut Frame, state: &AppState, status: &str) {
     };
 
     let is_success = status.contains("complete");
-    let border_color = if is_success { colors.success } else { colors.warning };
+    let border_color = if is_success {
+        colors.success
+    } else {
+        colors.warning
+    };
 
     let paragraph = Paragraph::new(Line::from(status))
         .alignment(Alignment::Center)

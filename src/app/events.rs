@@ -414,11 +414,12 @@ fn handle_update_confirm_key(state: &mut AppState, key: KeyEvent) {
             // Start the update
             state.mode = Mode::Updating;
             state.update_status = Some("Updating...".to_string());
-            
+
             // Run update (this blocks, but it's intentional for now)
             match crate::run_update(state.package_manager) {
                 Ok(()) => {
-                    state.update_status = Some("Update complete! Please restart hazelnut.".to_string());
+                    state.update_status =
+                        Some("Update complete! Please restart hazelnut.".to_string());
                     state.update_available = None;
                 }
                 Err(e) => {

@@ -38,51 +38,47 @@ pub fn check_for_updates() -> VersionCheck {
 
 /// Check if a newer version is available on GitHub with custom timeout
 pub fn check_for_updates_timeout(timeout: std::time::Duration) -> VersionCheck {
-    let url = format!("https://api.github.com/repos/{}/releases/latest", GITHUB_REPO);
-    
-    let agent = ureq::AgentBuilder::new()
-        .timeout(timeout)
-        .build();
-    
-    let result = agent.get(&url)
+    let url = format!(
+        "https://api.github.com/repos/{}/releases/latest",
+        GITHUB_REPO
+    );
+
+    let agent = ureq::AgentBuilder::new().timeout(timeout).build();
+
+    let result = agent
+        .get(&url)
         .set("User-Agent", &format!("hazelnut/{}", VERSION))
         .call();
-    
+
     match result {
-        Ok(response) => {
-            match response.into_json::<serde_json::Value>() {
-                Ok(json) => {
-                    if let Some(tag) = json.get("tag_name").and_then(|v| v.as_str()) {
-                        let latest = tag.trim_start_matches('v').to_string();
-                        let current = VERSION.to_string();
-                        
-                        if version_is_newer(&latest, &current) {
-                            VersionCheck::UpdateAvailable { latest, current }
-                        } else {
-                            VersionCheck::UpToDate
-                        }
+        Ok(response) => match response.into_json::<serde_json::Value>() {
+            Ok(json) => {
+                if let Some(tag) = json.get("tag_name").and_then(|v| v.as_str()) {
+                    let latest = tag.trim_start_matches('v').to_string();
+                    let current = VERSION.to_string();
+
+                    if version_is_newer(&latest, &current) {
+                        VersionCheck::UpdateAvailable { latest, current }
                     } else {
-                        VersionCheck::CheckFailed("Could not parse release info".to_string())
+                        VersionCheck::UpToDate
                     }
+                } else {
+                    VersionCheck::CheckFailed("Could not parse release info".to_string())
                 }
-                Err(e) => VersionCheck::CheckFailed(format!("Failed to parse response: {}", e)),
             }
-        }
+            Err(e) => VersionCheck::CheckFailed(format!("Failed to parse response: {}", e)),
+        },
         Err(e) => VersionCheck::CheckFailed(format!("Network error: {}", e)),
     }
 }
 
 /// Compare semver versions, returns true if `latest` is newer than `current`
 fn version_is_newer(latest: &str, current: &str) -> bool {
-    let parse = |v: &str| -> Vec<u32> {
-        v.split('.')
-            .filter_map(|s| s.parse().ok())
-            .collect()
-    };
-    
+    let parse = |v: &str| -> Vec<u32> { v.split('.').filter_map(|s| s.parse().ok()).collect() };
+
     let latest_parts = parse(latest);
     let current_parts = parse(current);
-    
+
     for i in 0..3 {
         let l = latest_parts.get(i).copied().unwrap_or(0);
         let c = current_parts.get(i).copied().unwrap_or(0);
@@ -159,10 +155,7 @@ pub fn run_update(pm: PackageManager) -> Result<(), String> {
         PackageManager::Homebrew => ("brew", vec!["upgrade", "hazelnut"]),
     };
 
-    match std::process::Command::new(cmd)
-        .args(&args)
-        .status()
-    {
+    match std::process::Command::new(cmd).args(&args).status() {
         Ok(status) if status.success() => Ok(()),
         Ok(status) => Err(format!("Update failed with status: {}", status)),
         Err(e) => Err(format!("Failed to run {}: {}", cmd, e)),

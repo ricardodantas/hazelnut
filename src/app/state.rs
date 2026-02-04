@@ -254,7 +254,14 @@ impl AppState {
 
         // Log update availability
         if let Some(ref version) = state.update_available {
-            state.log(LogLevel::Warning, format!("Update available: v{} (current: v{})", version, crate::VERSION));
+            state.log(
+                LogLevel::Warning,
+                format!(
+                    "Update available: v{} (current: v{})",
+                    version,
+                    crate::VERSION
+                ),
+            );
         }
 
         state
@@ -298,12 +305,19 @@ impl AppState {
         if let Ok(content) = std::fs::read_to_string(&log_path) {
             // Clear existing entries and load from file
             self.log_entries.clear();
-            
+
             // Parse log lines (format: [timestamp] LEVEL message)
-            for line in content.lines().rev().take(500).collect::<Vec<_>>().into_iter().rev() {
+            for line in content
+                .lines()
+                .rev()
+                .take(500)
+                .collect::<Vec<_>>()
+                .into_iter()
+                .rev()
+            {
                 // Strip ANSI codes and parse
                 let clean_line = strip_ansi_codes(line);
-                
+
                 if let Some(entry) = parse_daemon_log_line(&clean_line) {
                     self.log_entries.push(entry);
                 }
@@ -344,7 +358,7 @@ impl AppState {
     /// Increment frame counter (for animations) and refresh daemon logs periodically
     pub fn tick(&mut self) {
         self.frame = self.frame.wrapping_add(1);
-        
+
         // Refresh daemon logs every ~2 seconds (20 frames at 100ms poll)
         if self.frame.is_multiple_of(20) {
             self.load_daemon_logs();
@@ -854,7 +868,7 @@ impl RuleEditorState {
 fn strip_ansi_codes(s: &str) -> String {
     let mut result = String::new();
     let mut in_escape = false;
-    
+
     for c in s.chars() {
         if c == '\x1b' {
             in_escape = true;
@@ -866,7 +880,7 @@ fn strip_ansi_codes(s: &str) -> String {
             result.push(c);
         }
     }
-    
+
     result
 }
 
@@ -877,22 +891,22 @@ fn parse_daemon_log_line(line: &str) -> Option<LogEntry> {
     if line.is_empty() {
         return None;
     }
-    
+
     // Find timestamp (ISO format)
     let parts: Vec<&str> = line.splitn(3, ' ').collect();
     if parts.len() < 3 {
         return None;
     }
-    
+
     let timestamp_str = parts[0].trim();
     let level_str = parts[1].trim();
     let message = parts[2..].join(" ");
-    
+
     // Parse timestamp
     let timestamp = chrono::DateTime::parse_from_rfc3339(timestamp_str)
         .map(|dt| dt.with_timezone(&chrono::Local))
         .unwrap_or_else(|_| chrono::Local::now());
-    
+
     // Parse level
     let level = match level_str.to_uppercase().as_str() {
         "INFO" => LogLevel::Info,
@@ -901,7 +915,7 @@ fn parse_daemon_log_line(line: &str) -> Option<LogEntry> {
         "DEBUG" | "TRACE" => LogLevel::Info,
         _ => LogLevel::Info,
     };
-    
+
     Some(LogEntry {
         timestamp,
         level,

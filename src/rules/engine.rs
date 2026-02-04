@@ -20,7 +20,7 @@ impl RuleEngine {
     /// Evaluate rules for a file and return the first matching action
     pub fn evaluate(&self, path: &Path) -> Result<Option<Action>> {
         debug!("Evaluating rules for: {}", path.display());
-        
+
         for rule in &self.rules {
             if !rule.enabled {
                 trace!("Skipping disabled rule: {}", rule.name);
