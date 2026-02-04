@@ -65,7 +65,7 @@ pub fn handle_key(state: &mut AppState, key: KeyEvent) {
             state.should_quit = true;
             return;
         }
-        (_, KeyCode::Char('q')) if state.view == View::Dashboard => {
+        (_, KeyCode::Char('q')) => {
             state.should_quit = true;
             return;
         }
