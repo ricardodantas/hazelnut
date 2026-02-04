@@ -88,13 +88,18 @@ impl Watcher {
                 notify::EventKind::Create(_)
                 | notify::EventKind::Modify(_)
                 | notify::EventKind::Access(_) => {
-                    for path in event.paths {
-                        if path.exists() && self.engine.process(&path)? {
-                            processed += 1;
+                    for path in &event.paths {
+                        if path.is_file() && path.exists() {
+                            info!("File event detected: {}", path.display());
+                            if self.engine.process(path)? {
+                                processed += 1;
+                            }
                         }
                     }
                 }
-                _ => {}
+                _ => {
+                    debug!("Ignoring event kind: {:?}", event.kind);
+                }
             }
         }
 

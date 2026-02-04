@@ -2,7 +2,7 @@
 
 use anyhow::Result;
 use std::path::Path;
-use tracing::{debug, trace};
+use tracing::{debug, info, trace};
 
 use super::{Action, Rule};
 
@@ -19,6 +19,8 @@ impl RuleEngine {
 
     /// Evaluate rules for a file and return the first matching action
     pub fn evaluate(&self, path: &Path) -> Result<Option<Action>> {
+        debug!("Evaluating rules for: {}", path.display());
+        
         for rule in &self.rules {
             if !rule.enabled {
                 trace!("Skipping disabled rule: {}", rule.name);
@@ -26,11 +28,14 @@ impl RuleEngine {
             }
 
             if rule.condition.matches(path)? {
-                debug!("Rule '{}' matched: {}", rule.name, path.display());
+                info!("Rule '{}' matched: {}", rule.name, path.display());
                 return Ok(Some(rule.action.clone()));
+            } else {
+                debug!("Rule '{}' did not match: {}", rule.name, path.display());
             }
         }
 
+        debug!("No rules matched for: {}", path.display());
         Ok(None)
     }
 
