@@ -161,29 +161,59 @@ impl Action {
             }
 
             Action::Run { command, args } => {
-                // If args is empty and command contains spaces, split it
-                let (actual_command, base_args): (&str, Vec<&str>) = if args.is_empty() && command.contains(' ') {
-                    let parts: Vec<&str> = command.split_whitespace().collect();
-                    (parts[0], parts[1..].to_vec())
+                // Check if command contains shell operators - if so, run through shell
+                let has_shell_operators = command.contains("&&") 
+                    || command.contains("||") 
+                    || command.contains(';') 
+                    || command.contains('|')
+                    || command.contains('>')
+                    || command.contains('<');
+
+                if has_shell_operators && args.is_empty() {
+                    // Run through shell
+                    let shell = if cfg!(target_os = "windows") { "cmd" } else { "sh" };
+                    let shell_arg = if cfg!(target_os = "windows") { "/C" } else { "-c" };
+                    
+                    // Expand {path} patterns in the command
+                    let expanded_command = expand_pattern(command, path).unwrap_or_else(|_| command.clone());
+                    
+                    info!("Running (shell): {}", expanded_command);
+                    
+                    let status = std::process::Command::new(shell)
+                        .arg(shell_arg)
+                        .arg(&expanded_command)
+                        .status()
+                        .with_context(|| format!("Failed to run shell command: {}", expanded_command))?;
+
+                    if !status.success() {
+                        anyhow::bail!("Command failed with status: {}", status);
+                    }
                 } else {
-                    (command.as_str(), vec![])
-                };
+                    // Direct command execution
+                    // If args is empty and command contains spaces, split it
+                    let (actual_command, base_args): (&str, Vec<&str>) = if args.is_empty() && command.contains(' ') {
+                        let parts: Vec<&str> = command.split_whitespace().collect();
+                        (parts[0], parts[1..].to_vec())
+                    } else {
+                        (command.as_str(), vec![])
+                    };
 
-                let mut expanded_args: Vec<String> = base_args.iter().map(|s| s.to_string()).collect();
-                expanded_args.extend(
-                    args.iter()
-                        .map(|a| expand_pattern(a, path).unwrap_or_else(|_| a.clone()))
-                );
+                    let mut expanded_args: Vec<String> = base_args.iter().map(|s| s.to_string()).collect();
+                    expanded_args.extend(
+                        args.iter()
+                            .map(|a| expand_pattern(a, path).unwrap_or_else(|_| a.clone()))
+                    );
 
-                info!("Running: {} {:?}", actual_command, expanded_args);
+                    info!("Running: {} {:?}", actual_command, expanded_args);
 
-                let status = std::process::Command::new(actual_command)
-                    .args(&expanded_args)
-                    .status()
-                    .with_context(|| format!("Failed to run command: {}", actual_command))?;
+                    let status = std::process::Command::new(actual_command)
+                        .args(&expanded_args)
+                        .status()
+                        .with_context(|| format!("Failed to run command: {}", actual_command))?;
 
-                if !status.success() {
-                    anyhow::bail!("Command failed with status: {}", status);
+                    if !status.success() {
+                        anyhow::bail!("Command failed with status: {}", status);
+                    }
                 }
             }
 
