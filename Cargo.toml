@@ -1,15 +1,15 @@
 [package]
-name = "tidy"
+name = "hazelnut"
 version = "0.1.0"
 edition = "2024"
 rust-version = "1.93"
 authors = ["Ricardo Dantas"]
 description = "A terminal-based automated file organizer inspired by Hazel"
 license = "MIT"
-repository = "https://github.com/ricardodantas/tidy"
+repository = "https://github.com/ricardodantas/hazelnut"
 keywords = ["tui", "file-organizer", "automation", "cli", "terminal"]
 categories = ["command-line-utilities", "filesystem"]
-default-run = "tidy"
+default-run = "hazelnut"
 
 [dependencies]
 # TUI
@@ -46,11 +46,11 @@ assert_fs = "1.1"
 predicates = "3.1"
 
 [[bin]]
-name = "tidy"
+name = "hazelnut"
 path = "src/main.rs"
 
 [[bin]]
-name = "tidyd"
+name = "hazelnutd"
 path = "src/daemon.rs"
 
 [profile.release]
