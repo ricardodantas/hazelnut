@@ -1,16 +1,16 @@
-# AGENTS.md - Tidy Project
+# AGENTS.md - Hazelnut Project
 
 ## Overview
 
-**Tidy** 🧹 is a terminal-based automated file organizer inspired by [Hazel](https://www.noodlesoft.com/). It watches directories and automatically organizes files based on user-defined rules.
+**Hazelnut** 🧹 is a terminal-based automated file organizer inspired by [Hazel](https://www.noodlesoft.com/). It watches directories and automatically organizes files based on user-defined rules.
 
 ## Architecture
 
 ```
-tidy/
+hazelnut/
 ├── src/
 │   ├── main.rs          # TUI application entry point
-│   ├── daemon.rs        # Background daemon entry point (tidyd)
+│   ├── daemon.rs        # Background daemon entry point (hazelnutd)
 │   ├── lib.rs           # Shared library code
 │   ├── theme.rs         # 8 beautiful color themes
 │   ├── app/             # TUI application logic
@@ -41,7 +41,7 @@ tidy/
 
 ## Key Features
 
-### TUI (`tidy`)
+### TUI (`hazelnut`)
 - **Dashboard**: Logo, stats, quick actions
 - **Rules view**: List, toggle enable/disable
 - **Watches view**: List watched folders
@@ -49,7 +49,7 @@ tidy/
 - **8 themes**: Catppuccin, Dracula, Nord, Gruvbox, Tokyo Night, Monokai, Ocean, Sunset
 - **Keybindings**: vim-style navigation (j/k), Tab to switch views, ? for help
 
-### Daemon (`tidyd`)
+### Daemon (`hazelnutd`)
 - Background file watching
 - Rule execution on file changes
 - IPC communication with TUI (planned)
@@ -98,7 +98,7 @@ cargo run
 cargo run -- --config path/to/config.toml
 
 # Run daemon in foreground
-cargo run --bin tidyd run
+cargo run --bin hazelnutd run
 
 # Build release binaries
 cargo build --release
@@ -124,7 +124,7 @@ cargo run -- run --dir ~/Downloads --apply
 
 ## Configuration
 
-Default config: `~/.config/tidy/config.toml`
+Default config: `~/.config/hazelnut/config.toml`
 
 ```toml
 [general]
@@ -196,5 +196,5 @@ Press `Ctrl+t` in the TUI to cycle through themes:
 ## Binary Locations
 
 After `cargo build --release`:
-- TUI: `target/release/tidy` (3.4 MB)
-- Daemon: `target/release/tidyd` (2.5 MB)
+- TUI: `target/release/hazelnut` (3.4 MB)
+- Daemon: `target/release/hazelnutd` (2.5 MB)

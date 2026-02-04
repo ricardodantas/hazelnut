@@ -12,18 +12,18 @@ use super::state::{AppState, LogLevel, Mode, SettingsItem, View};
 use crate::config::Config;
 use crate::theme::Theme;
 
-/// ASCII art logo for Tidy
+/// ASCII art logo for Hazelnut
 const LOGO: &str = r#"
-  ████████╗██╗██████╗ ██╗   ██╗
-  ╚══██╔══╝██║██╔══██╗╚██╗ ██╔╝
-     ██║   ██║██║  ██║ ╚████╔╝ 
-     ██║   ██║██║  ██║  ╚██╔╝  
-     ██║   ██║██████╔╝   ██║   
-     ╚═╝   ╚═╝╚═════╝    ╚═╝   
+██╗  ██╗ █████╗ ███████╗███████╗██╗     ███╗   ██╗██╗   ██╗████████╗
+██║  ██║██╔══██╗╚══███╔╝██╔════╝██║     ████╗  ██║██║   ██║╚══██╔══╝
+███████║███████║  ███╔╝ █████╗  ██║     ██╔██╗ ██║██║   ██║   ██║   
+██╔══██║██╔══██║ ███╔╝  ██╔══╝  ██║     ██║╚██╗██║██║   ██║   ██║   
+██║  ██║██║  ██║███████╗███████╗███████╗██║ ╚████║╚██████╔╝   ██║   
+╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚══════╝╚══════╝╚═╝  ╚═══╝ ╚═════╝    ╚═╝   
 "#;
 
-/// Small broom icon
-const BROOM: &str = "🧹";
+/// Hazelnut icon
+const ICON: &str = "🌰";
 
 /// Render the entire UI
 pub fn render(frame: &mut Frame, state: &AppState) {
@@ -126,7 +126,7 @@ fn render_tabs(frame: &mut Frame, state: &AppState, area: Rect) {
             Block::default()
                 .borders(Borders::ALL)
                 .border_style(colors.block())
-                .title(format!(" {} Tidy ", BROOM))
+                .title(format!(" {} Hazelnut ", ICON))
                 .title_style(colors.logo_style_primary()),
         )
         .select(selected)
@@ -301,7 +301,7 @@ fn render_rules(frame: &mut Frame, state: &AppState, area: Rect) {
             Line::from(""),
             Line::from(vec![
                 Span::styled("  Edit ", colors.text_dim()),
-                Span::styled("~/.config/tidy/config.toml", colors.text_primary()),
+                Span::styled("~/.config/hazelnut/config.toml", colors.text_primary()),
                 Span::styled(" to add rules", colors.text_dim()),
             ]),
             Line::from(""),
@@ -394,7 +394,7 @@ fn render_watches(frame: &mut Frame, state: &AppState, area: Rect) {
             Line::from(""),
             Line::from(vec![
                 Span::styled("  Edit ", colors.text_dim()),
-                Span::styled("~/.config/tidy/config.toml", colors.text_primary()),
+                Span::styled("~/.config/hazelnut/config.toml", colors.text_primary()),
                 Span::styled(" to add folders", colors.text_dim()),
             ]),
         ])
@@ -621,7 +621,7 @@ fn render_help_popup(frame: &mut Frame, state: &AppState) {
         ]),
         Line::from(vec![
             Span::styled("  A                  ", colors.key_hint()),
-            Span::styled("About Tidy", colors.text()),
+            Span::styled("About Hazelnut", colors.text()),
         ]),
         Line::from(vec![
             Span::styled("  ?                  ", colors.key_hint()),
@@ -1025,19 +1025,19 @@ fn render_about_dialog(frame: &mut Frame, state: &AppState) {
     let colors = state.theme.colors();
     let area = frame.area();
 
-    let popup_area = centered_rect(60, 60, area);
+    let popup_area = centered_rect(80, 60, area);
     frame.render_widget(Clear, popup_area);
 
     let version = env!("CARGO_PKG_VERSION");
-    let repo = "https://github.com/ricardodantas/tidy";
+    let repo = "https://github.com/ricardodantas/hazelnut";
 
     let logo = [
-        "  ████████╗██╗██████╗ ██╗   ██╗",
-        "  ╚══██╔══╝██║██╔══██╗╚██╗ ██╔╝",
-        "     ██║   ██║██║  ██║ ╚████╔╝ ",
-        "     ██║   ██║██║  ██║  ╚██╔╝  ",
-        "     ██║   ██║██████╔╝   ██║   ",
-        "     ╚═╝   ╚═╝╚═════╝    ╚═╝   ",
+        "██╗  ██╗ █████╗ ███████╗███████╗██╗     ███╗   ██╗██╗   ██╗████████╗",
+        "██║  ██║██╔══██╗╚══███╔╝██╔════╝██║     ████╗  ██║██║   ██║╚══██╔══╝",
+        "███████║███████║  ███╔╝ █████╗  ██║     ██╔██╗ ██║██║   ██║   ██║   ",
+        "██╔══██║██╔══██║ ███╔╝  ██╔══╝  ██║     ██║╚██╗██║██║   ██║   ██║   ",
+        "██║  ██║██║  ██║███████╗███████╗███████╗██║ ╚████║╚██████╔╝   ██║   ",
+        "╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚══════╝╚══════╝╚═╝  ╚═══╝ ╚═════╝    ╚═╝   ",
     ];
 
     let mut lines: Vec<Line> = logo
@@ -1048,7 +1048,7 @@ fn render_about_dialog(frame: &mut Frame, state: &AppState) {
     lines.extend([
         Line::from(""),
         Line::from(Span::styled(
-            "🧹 Terminal file organizer inspired by Hazel",
+            "🌰 Terminal file organizer inspired by Hazel",
             Style::default().fg(colors.fg).add_modifier(Modifier::ITALIC),
         )),
         Line::from(""),
@@ -1092,7 +1092,7 @@ fn render_about_dialog(frame: &mut Frame, state: &AppState) {
                 .border_type(BorderType::Rounded)
                 .border_style(Style::default().fg(colors.primary))
                 .style(Style::default().bg(colors.bg))
-                .title(" 🧹 About Tidy ")
+                .title(" 🌰 About Hazelnut ")
                 .title_style(Style::default().fg(colors.primary).add_modifier(Modifier::BOLD)),
         );
 

@@ -678,6 +678,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "hazelnut"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "assert_fs",
+ "chrono",
+ "clap",
+ "crossterm",
+ "dirs",
+ "glob",
+ "notify",
+ "open",
+ "predicates",
+ "ratatui",
+ "regex",
+ "serde",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tokio",
+ "toml",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
 name = "heck"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1859,31 +1884,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f60246a4944f24f6e018aa17cdeffb7818b76356965d03b07d6a9886e8962185"
 dependencies = [
  "cfg-if",
-]
-
-[[package]]
-name = "tidy"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "assert_fs",
- "chrono",
- "clap",
- "crossterm",
- "dirs",
- "glob",
- "notify",
- "open",
- "predicates",
- "ratatui",
- "regex",
- "serde",
- "tempfile",
- "thiserror 2.0.18",
- "tokio",
- "toml",
- "tracing",
- "tracing-subscriber",
 ]
 
 [[package]]

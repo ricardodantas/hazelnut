@@ -1,9 +1,9 @@
 <p align="center">
-  <img src="screenshots/01-dashboard.png" alt="Tidy Dashboard" width="700">
+  <img src="screenshots/01-dashboard.png" alt="Hazelnut Dashboard" width="700">
 </p>
 
 <h1 align="center">
-  🧹 Tidy
+  🧹 Hazelnut
 </h1>
 
 <p align="center">
@@ -15,16 +15,16 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/ricardodantas/tidy/releases">
-    <img src="https://img.shields.io/github/v/release/ricardodantas/tidy?style=flat&labelColor=1e1e2e&color=cba6f7&logo=github&logoColor=white" alt="Release">
+  <a href="https://github.com/ricardodantas/hazelnut/releases">
+    <img src="https://img.shields.io/github/v/release/ricardodantas/hazelnut?style=flat&labelColor=1e1e2e&color=cba6f7&logo=github&logoColor=white" alt="Release">
   </a>
-  <a href="https://crates.io/crates/tidy">
-    <img src="https://img.shields.io/crates/v/tidy?style=flat&labelColor=1e1e2e&color=fab387&logo=rust&logoColor=white" alt="Crates.io">
+  <a href="https://crates.io/crates/hazelnut">
+    <img src="https://img.shields.io/crates/v/hazelnut?style=flat&labelColor=1e1e2e&color=fab387&logo=rust&logoColor=white" alt="Crates.io">
   </a>
-  <a href="https://github.com/ricardodantas/tidy/actions">
-    <img src="https://img.shields.io/github/actions/workflow/status/ricardodantas/tidy/ci.yml?style=flat&labelColor=1e1e2e&color=a6e3a1&logo=github-actions&logoColor=white&label=CI" alt="CI">
+  <a href="https://github.com/ricardodantas/hazelnut/actions">
+    <img src="https://img.shields.io/github/actions/workflow/status/ricardodantas/hazelnut/ci.yml?style=flat&labelColor=1e1e2e&color=a6e3a1&logo=github-actions&logoColor=white&label=CI" alt="CI">
   </a>
-  <a href="https://github.com/ricardodantas/tidy/blob/main/LICENSE">
+  <a href="https://github.com/ricardodantas/hazelnut/blob/main/LICENSE">
     <img src="https://img.shields.io/badge/license-MIT-89b4fa?style=flat&labelColor=1e1e2e" alt="License">
   </a>
   <a href="https://rust-lang.org">
@@ -104,26 +104,26 @@ Human-readable TOML config that's easy to write and maintain.
 #### Homebrew (Recommended)
 
 ```bash
-brew install ricardodantas/tap/tidy
+brew install ricardodantas/tap/hazelnut
 ```
 
 #### Cargo
 
 ```bash
-cargo install tidy-cli
+cargo install hazelnut-cli
 ```
 
 #### From Source
 
 ```bash
-git clone https://github.com/ricardodantas/tidy
-cd tidy
+git clone https://github.com/ricardodantas/hazelnut
+cd hazelnut
 cargo install --path .
 ```
 
 ### First Run
 
-1. **Create a config file** at `~/.config/tidy/config.toml`:
+1. **Create a config file** at `~/.config/hazelnut/config.toml`:
 
 ```toml
 # Watch your Downloads folder
@@ -145,13 +145,13 @@ destination = "~/Documents/PDFs"
 2. **Launch the TUI** to manage and monitor:
 
 ```bash
-tidy
+hazelnut
 ```
 
 3. **Or start the daemon** to run in the background:
 
 ```bash
-tidyd start
+hazelnutd start
 ```
 
 <p align="center">
@@ -162,10 +162,10 @@ tidyd start
 
 ## ⚙️ Configuration
 
-Tidy uses [TOML](https://toml.io) for configuration. The default location is:
+Hazelnut uses [TOML](https://toml.io) for configuration. The default location is:
 
 ```
-~/.config/tidy/config.toml
+~/.config/hazelnut/config.toml
 ```
 
 ### Full Configuration Example
@@ -180,7 +180,7 @@ Tidy uses [TOML](https://toml.io) for configuration. The default location is:
 log_level = "info"
 
 # Optional log file path
-log_file = "~/.local/share/tidy/tidy.log"
+log_file = "~/.local/share/hazelnut/hazelnut.log"
 
 # Preview actions without executing (great for testing)
 dry_run = false
@@ -256,7 +256,7 @@ See [docs/configuration.md](docs/configuration.md) for the complete reference.
 
 ## 📋 Rules
 
-Rules are the heart of Tidy. Each rule has a **condition** (what files to match) and an **action** (what to do with them).
+Rules are the heart of Hazelnut. Each rule has a **condition** (what files to match) and an **action** (what to do with them).
 
 ### Conditions
 
@@ -496,7 +496,7 @@ args = ["{path}", "-quality", "80", "{path}"]
 | `1` `2` `3` `4` | Jump to view (Dashboard, Rules, Watches, Log) |
 | `s` | Open settings |
 | `t` | Open theme picker |
-| `A` | About Tidy |
+| `A` | About Hazelnut |
 | `?` / `F1` | Show help |
 | `q` | Quit (from Dashboard) |
 | `Ctrl+c` / `Ctrl+q` | Force quit |
@@ -552,7 +552,7 @@ args = ["{path}", "-quality", "80", "{path}"]
 
 ## 🎨 Themes
 
-Tidy includes **15 beautiful themes** based on popular terminal and editor color schemes.
+Hazelnut includes **15 beautiful themes** based on popular terminal and editor color schemes.
 
 Press `t` in the TUI to open the theme picker with live preview.
 
@@ -588,7 +588,7 @@ Press `t` in the TUI to open the theme picker with live preview.
 
 ## 🏗️ Architecture
 
-Tidy consists of two binaries that work together:
+Hazelnut consists of two binaries that work together:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -597,7 +597,7 @@ Tidy consists of two binaries that work together:
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                       tidy (TUI)                            │
+│                       hazelnut (TUI)                            │
 │  • Manage rules                                             │
 │  • Monitor activity                                         │
 │  • Change themes                                            │
@@ -608,7 +608,7 @@ Tidy consists of two binaries that work together:
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                     tidyd (Daemon)                          │
+│                     hazelnutd (Daemon)                          │
 │  • Watch folders                                            │
 │  • Evaluate rules                                           │
 │  • Execute actions                                          │
@@ -621,7 +621,7 @@ Tidy consists of two binaries that work together:
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### `tidy` — The TUI
+### `hazelnut` — The TUI
 
 Interactive terminal interface for:
 - Viewing and managing rules
@@ -631,25 +631,25 @@ Interactive terminal interface for:
 - Sending commands to the daemon
 
 ```bash
-tidy              # Launch TUI
-tidy list         # List all rules
-tidy check        # Validate config
-tidy run          # Run rules once (dry-run)
-tidy run --apply  # Run rules once (for real)
-tidy status       # Check daemon status
+hazelnut              # Launch TUI
+hazelnut list         # List all rules
+hazelnut check        # Validate config
+hazelnut run          # Run rules once (dry-run)
+hazelnut run --apply  # Run rules once (for real)
+hazelnut status       # Check daemon status
 ```
 
-### `tidyd` — The Daemon
+### `hazelnutd` — The Daemon
 
 Background service that does the actual work:
 
 ```bash
-tidyd start      # Start daemon (background)
-tidyd stop       # Stop daemon
-tidyd restart    # Restart daemon
-tidyd status     # Show daemon status
-tidyd reload     # Reload configuration
-tidyd run        # Run in foreground (for debugging)
+hazelnutd start      # Start daemon (background)
+hazelnutd stop       # Stop daemon
+hazelnutd restart    # Restart daemon
+hazelnutd status     # Show daemon status
+hazelnutd reload     # Reload configuration
+hazelnutd run        # Run in foreground (for debugging)
 ```
 
 <br>
@@ -665,15 +665,15 @@ tidyd run        # Run in foreground (for debugging)
 
 ```bash
 # Clone the repository
-git clone https://github.com/ricardodantas/tidy
-cd tidy
+git clone https://github.com/ricardodantas/hazelnut
+cd hazelnut
 
 # Build release binary
 cargo build --release
 
 # The binaries will be at:
-# - target/release/tidy
-# - target/release/tidyd
+# - target/release/hazelnut
+# - target/release/hazelnutd
 
 # Or install directly
 cargo install --path .
@@ -686,7 +686,7 @@ cargo install --path .
 cargo run
 
 # Run daemon in foreground
-cargo run --bin tidyd run
+cargo run --bin hazelnutd run
 
 # Run with sample config
 cargo run -- --config examples/config.toml
@@ -722,7 +722,7 @@ Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for gui
 ### Project Structure
 
 ```
-tidy/
+hazelnut/
 ├── src/
 │   ├── main.rs          # TUI entry point
 │   ├── daemon.rs        # Daemon entry point

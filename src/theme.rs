@@ -1,6 +1,6 @@
 //! Theme configuration and colors.
 //!
-//! Tidy supports popular terminal color schemes out of the box.
+//! Hazelnut supports popular terminal color schemes out of the box.
 //! Each theme defines colors for UI elements like accents, backgrounds,
 //! text, selections, and more.
 //!

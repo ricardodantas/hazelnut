@@ -1,20 +1,20 @@
 # Configuration Reference
 
-Tidy uses [TOML](https://toml.io) for configuration. This document provides a complete reference for all configuration options.
+Hazelnut uses [TOML](https://toml.io) for configuration. This document provides a complete reference for all configuration options.
 
 ## Config File Location
 
 The default configuration file location is:
 
 ```
-~/.config/tidy/config.toml
+~/.config/hazelnut/config.toml
 ```
 
 You can specify a different config file with the `--config` flag:
 
 ```bash
-tidy --config /path/to/config.toml
-tidyd --config /path/to/config.toml run
+hazelnut --config /path/to/config.toml
+hazelnutd --config /path/to/config.toml run
 ```
 
 ## Complete Example
@@ -23,7 +23,7 @@ Here's a comprehensive example showing all available options:
 
 ```toml
 # ═══════════════════════════════════════════════════════════════════════════════
-# TIDY CONFIGURATION
+# HAZELNUT CONFIGURATION
 # ═══════════════════════════════════════════════════════════════════════════════
 
 # ───────────────────────────────────────────────────────────────────────────────
@@ -35,7 +35,7 @@ Here's a comprehensive example showing all available options:
 log_level = "info"
 
 # Path to log file (optional - logs to stdout if not set)
-log_file = "~/.local/share/tidy/tidy.log"
+log_file = "~/.local/share/hazelnut/hazelnut.log"
 
 # Dry run mode - preview actions without executing
 # Useful for testing new rules
@@ -130,7 +130,7 @@ theme = "dracula"  # Options below
 
 ## Watch Configuration
 
-Watch folders define which directories Tidy monitors for changes.
+Watch folders define which directories Hazelnut monitors for changes.
 
 ```toml
 [[watch]]
@@ -178,7 +178,7 @@ recursive = true
 
 ## Rules
 
-Rules are the core of Tidy. Each rule consists of:
+Rules are the core of Hazelnut. Each rule consists of:
 
 1. **Metadata** - Name, enabled status, processing behavior
 2. **Condition** - What files to match
@@ -694,9 +694,9 @@ pattern = "photo_{datetime}.{ext}"
 ### Validate Configuration
 
 ```bash
-tidy check
+hazelnut check
 # or
-tidy check --config /path/to/config.toml
+hazelnut check --config /path/to/config.toml
 ```
 
 ### Test Rules (Dry Run)
@@ -707,15 +707,15 @@ tidy check --config /path/to/config.toml
 dry_run = true
 
 # Or via command line
-tidy run           # Dry run by default
-tidy run --apply   # Actually apply actions
+hazelnut run           # Dry run by default
+hazelnut run --apply   # Actually apply actions
 ```
 
 ### Debug Logging
 
 ```bash
 # Via environment variable
-TIDY_LOG=debug tidy
+HAZELNUT_LOG=debug hazelnut
 
 # Or in config
 [general]
@@ -726,7 +726,7 @@ log_level = "debug"
 
 **Rule not matching:**
 - Check all conditions - they must ALL match
-- Use `tidy run` to test rules in dry-run mode
+- Use `hazelnut run` to test rules in dry-run mode
 - Enable debug logging to see what's happening
 
 **Files not being watched:**
@@ -735,7 +735,7 @@ log_level = "debug"
 - Look at logs for watcher errors
 
 **Permission errors:**
-- Ensure Tidy has read/write access to source and destination
+- Ensure Hazelnut has read/write access to source and destination
 - Check if destination folder needs to be created
 
 ---
@@ -744,10 +744,10 @@ log_level = "debug"
 
 | Variable | Description |
 |----------|-------------|
-| `TIDY_LOG` | Set log level (overrides config) |
-| `TIDY_CONFIG` | Default config file path |
+| `HAZELNUT_LOG` | Set log level (overrides config) |
+| `HAZELNUT_CONFIG` | Default config file path |
 
 ```bash
-TIDY_LOG=debug tidy
-TIDY_CONFIG=/custom/path/config.toml tidyd run
+HAZELNUT_LOG=debug hazelnut
+HAZELNUT_CONFIG=/custom/path/config.toml hazelnutd run
 ```

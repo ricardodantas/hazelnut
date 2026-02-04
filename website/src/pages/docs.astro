@@ -4,7 +4,7 @@ import Layout from '../layouts/Layout.astro';
 const baseUrl = import.meta.env.BASE_URL;
 ---
 
-<Layout title="Documentation - Tidy">
+<Layout title="Documentation - Hazelnut">
   <div class="docs-layout">
     <aside class="docs-sidebar">
       <nav class="docs-nav">
@@ -40,21 +40,21 @@ const baseUrl = import.meta.env.BASE_URL;
     <main class="docs-content">
       <div class="docs-header">
         <h1>Documentation</h1>
-        <p>Everything you need to know about using Tidy to organize your files.</p>
+        <p>Everything you need to know about using Hazelnut to organize your files.</p>
       </div>
       
       <section id="installation">
         <h2>Installation</h2>
         
         <h3>Homebrew (Recommended)</h3>
-        <p>The easiest way to install Tidy on macOS or Linux:</p>
+        <p>The easiest way to install Hazelnut on macOS or Linux:</p>
         
         <div class="code-block">
           <div class="code-header">
             <span>Homebrew</span>
-            <button class="copy-btn" data-copy="brew install ricardodantas/tap/tidy">Copy</button>
+            <button class="copy-btn" data-copy="brew install ricardodantas/tap/hazelnut">Copy</button>
           </div>
-          <pre><code>brew install ricardodantas/tap/tidy</code></pre>
+          <pre><code>brew install ricardodantas/tap/hazelnut</code></pre>
         </div>
         
         <h3>Cargo</h3>
@@ -63,9 +63,9 @@ const baseUrl = import.meta.env.BASE_URL;
         <div class="code-block">
           <div class="code-header">
             <span>From crates.io</span>
-            <button class="copy-btn" data-copy="cargo install tidy-cli">Copy</button>
+            <button class="copy-btn" data-copy="cargo install hazelnut-cli">Copy</button>
           </div>
-          <pre><code>cargo install tidy-cli</code></pre>
+          <pre><code>cargo install hazelnut-cli</code></pre>
         </div>
         
         <h3>From Source</h3>
@@ -73,12 +73,12 @@ const baseUrl = import.meta.env.BASE_URL;
         <div class="code-block">
           <div class="code-header">
             <span>Build from source</span>
-            <button class="copy-btn" data-copy="git clone https://github.com/ricardodantas/tidy.git
-cd tidy
+            <button class="copy-btn" data-copy="git clone https://github.com/ricardodantas/hazelnut.git
+cd hazelnut
 cargo build --release">Copy</button>
           </div>
-          <pre><code>git clone https://github.com/ricardodantas/tidy.git
-cd tidy
+          <pre><code>git clone https://github.com/ricardodantas/hazelnut.git
+cd hazelnut
 cargo build --release</code></pre>
         </div>
         
@@ -100,8 +100,8 @@ cargo build --release</code></pre>
               <h4>Start the daemon</h4>
               <p>The daemon runs in the background, watching folders and applying rules:</p>
               <div class="code-block inline">
-                <pre><code>tidyd start</code></pre>
-                <button class="copy-btn small" data-copy="tidyd start">Copy</button>
+                <pre><code>hazelnutd start</code></pre>
+                <button class="copy-btn small" data-copy="hazelnutd start">Copy</button>
               </div>
             </div>
           </div>
@@ -112,8 +112,8 @@ cargo build --release</code></pre>
               <h4>Launch the TUI</h4>
               <p>Open the terminal interface to manage rules and monitor activity:</p>
               <div class="code-block inline">
-                <pre><code>tidy</code></pre>
-                <button class="copy-btn small" data-copy="tidy">Copy</button>
+                <pre><code>hazelnut</code></pre>
+                <button class="copy-btn small" data-copy="hazelnut">Copy</button>
               </div>
             </div>
           </div>
@@ -122,7 +122,7 @@ cargo build --release</code></pre>
             <span class="number">3</span>
             <div>
               <h4>Configure your rules</h4>
-              <p>Edit the config file at <code>~/.config/tidy/config.toml</code> or use the TUI to create rules.</p>
+              <p>Edit the config file at <code>~/.config/hazelnut/config.toml</code> or use the TUI to create rules.</p>
             </div>
           </div>
         </div>
@@ -130,15 +130,15 @@ cargo build --release</code></pre>
       
       <section id="architecture">
         <h2>Architecture</h2>
-        <p>Tidy consists of two main components:</p>
+        <p>Hazelnut consists of two main components:</p>
         
         <div class="info-cards">
           <div class="info-card">
-            <h4><code>tidy</code></h4>
+            <h4><code>hazelnut</code></h4>
             <p>The TUI (Terminal User Interface) for managing rules, viewing logs, and monitoring file organization activity.</p>
           </div>
           <div class="info-card">
-            <h4><code>tidyd</code></h4>
+            <h4><code>hazelnutd</code></h4>
             <p>The background daemon that watches folders and applies rules in real-time. Communicates with the TUI via Unix socket.</p>
           </div>
         </div>
@@ -146,9 +146,9 @@ cargo build --release</code></pre>
       
       <section id="config-file">
         <h2>Config File</h2>
-        <p>Tidy uses TOML for configuration. The default location is:</p>
+        <p>Hazelnut uses TOML for configuration. The default location is:</p>
         <div class="code-block inline">
-          <pre><code>~/.config/tidy/config.toml</code></pre>
+          <pre><code>~/.config/hazelnut/config.toml</code></pre>
         </div>
         
         <p>Here's a complete example configuration:</p>
@@ -158,7 +158,7 @@ cargo build --release</code></pre>
             <span>config.toml</span>
             <button class="copy-btn" data-copy={`[general]
 log_level = "info"
-log_file = "~/.local/share/tidy/tidy.log"
+log_file = "~/.local/share/hazelnut/hazelnut.log"
 dry_run = false
 debounce_seconds = 2
 
@@ -185,7 +185,7 @@ destination = "~/Documents/PDFs"`}>Copy</button>
           </div>
           <pre><code>{`[general]
 log_level = "info"
-log_file = "~/.local/share/tidy/tidy.log"
+log_file = "~/.local/share/hazelnut/hazelnut.log"
 dry_run = false
 debounce_seconds = 2
 
@@ -257,7 +257,7 @@ destination = "~/Documents/PDFs"`}</code></pre>
       
       <section id="watch-folders">
         <h2>Watch Folders</h2>
-        <p>Configure which directories Tidy monitors for changes:</p>
+        <p>Configure which directories Hazelnut monitors for changes:</p>
         
         <div class="code-block">
           <pre><code>{`[[watch]]
@@ -469,11 +469,11 @@ pattern = "{date:YYYY-MM-DD}_{name}.{ext}"`}</code></pre>
       
       <section id="tui-overview">
         <h2>TUI Overview</h2>
-        <p>The TUI provides a beautiful interface for managing Tidy. Launch it with:</p>
+        <p>The TUI provides a beautiful interface for managing Hazelnut. Launch it with:</p>
         
         <div class="code-block inline">
-          <pre><code>tidy</code></pre>
-          <button class="copy-btn small" data-copy="tidy">Copy</button>
+          <pre><code>hazelnut</code></pre>
+          <button class="copy-btn small" data-copy="hazelnut">Copy</button>
         </div>
         
         <div class="screenshot-gallery">

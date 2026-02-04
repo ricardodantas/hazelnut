@@ -53,11 +53,11 @@ impl Config {
 
     /// Get the default config file path
     pub fn default_path() -> Option<PathBuf> {
-        dirs::config_dir().map(|d| d.join("tidy").join("config.toml"))
+        dirs::config_dir().map(|d| d.join("hazelnut").join("config.toml"))
     }
 
     /// Get the default data directory
     pub fn data_dir() -> Option<PathBuf> {
-        dirs::data_dir().map(|d| d.join("tidy"))
+        dirs::data_dir().map(|d| d.join("hazelnut"))
     }
 }

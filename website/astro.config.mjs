@@ -3,7 +3,7 @@ import { defineConfig } from 'astro/config';
 
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://tidy.ricardodantas.me',
+  site: 'https://hazelnut.ricardodantas.me',
   base: '/',
   build: {
     assets: 'assets'

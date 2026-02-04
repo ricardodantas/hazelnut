@@ -6,8 +6,8 @@ use std::path::PathBuf;
 pub fn socket_path() -> PathBuf {
     dirs::runtime_dir()
         .or_else(dirs::data_dir)
-        .map(|d| d.join("tidy.sock"))
-        .unwrap_or_else(|| PathBuf::from("/tmp/tidy.sock"))
+        .map(|d| d.join("hazelnut.sock"))
+        .unwrap_or_else(|| PathBuf::from("/tmp/hazelnut.sock"))
 }
 
 /// Messages from TUI to daemon

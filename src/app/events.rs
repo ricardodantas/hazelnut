@@ -322,7 +322,7 @@ fn handle_about_key(state: &mut AppState, key: KeyEvent) {
         }
         KeyCode::Char('g') | KeyCode::Char('G') => {
             // Open GitHub repository
-            let _ = open::that("https://github.com/ricardodantas/tidy");
+            let _ = open::that("https://github.com/ricardodantas/hazelnut");
         }
         _ => {}
     }
@@ -494,7 +494,7 @@ fn toggle_daemon(state: &mut AppState) {
 
     if state.daemon_running {
         // Stop daemon
-        match Command::new("tidyd").args(["stop"]).status() {
+        match Command::new("hazelnutd").args(["stop"]).status() {
             Ok(status) if status.success() => {
                 state.daemon_running = false;
                 state.set_status("Daemon stopped");
@@ -508,7 +508,7 @@ fn toggle_daemon(state: &mut AppState) {
         }
     } else {
         // Start daemon
-        match Command::new("tidyd").args(["start"]).status() {
+        match Command::new("hazelnutd").args(["start"]).status() {
             Ok(status) if status.success() => {
                 state.daemon_running = true;
                 state.set_status("Daemon started");

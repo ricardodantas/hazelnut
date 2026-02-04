@@ -1,4 +1,4 @@
-//! Tidy TUI Application
+//! Hazelnut TUI Application
 //!
 //! Terminal user interface for managing file organization rules.
 
@@ -8,7 +8,7 @@ use std::path::PathBuf;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 #[derive(Parser, Debug)]
-#[command(name = "tidy")]
+#[command(name = "hazelnut")]
 #[command(author, version, about = "Terminal-based automated file organizer")]
 struct Cli {
     /// Path to config file
@@ -61,17 +61,17 @@ async fn main() -> Result<()> {
     let log_level = if cli.verbose { "debug" } else { "info" };
     tracing_subscriber::registry()
         .with(tracing_subscriber::EnvFilter::new(
-            std::env::var("TIDY_LOG").unwrap_or_else(|_| log_level.to_string()),
+            std::env::var("HAZELNUT_LOG").unwrap_or_else(|_| log_level.to_string()),
         ))
         .with(tracing_subscriber::fmt::layer().with_target(false))
         .init();
 
     match cli.command {
         None | Some(Commands::Ui) => {
-            tidy::app::run(cli.config).await?;
+            hazelnut::app::run(cli.config).await?;
         }
         Some(Commands::List) => {
-            let config = tidy::Config::load(cli.config.as_deref())?;
+            let config = hazelnut::Config::load(cli.config.as_deref())?;
             println!("Rules:");
             for (i, rule) in config.rules.iter().enumerate() {
                 let status = if rule.enabled { "✓" } else { "✗" };
@@ -82,7 +82,7 @@ async fn main() -> Result<()> {
             config: config_path,
         }) => {
             let path = config_path.or(cli.config);
-            match tidy::Config::load(path.as_deref()) {
+            match hazelnut::Config::load(path.as_deref()) {
                 Ok(config) => {
                     println!("✓ Config is valid");
                     println!("  {} watch paths", config.watches.len());
@@ -95,8 +95,8 @@ async fn main() -> Result<()> {
             }
         }
         Some(Commands::Run { apply, dir }) => {
-            let config = tidy::Config::load(cli.config.as_deref())?;
-            let engine = tidy::RuleEngine::new(config.rules);
+            let config = hazelnut::Config::load(cli.config.as_deref())?;
+            let engine = hazelnut::RuleEngine::new(config.rules);
 
             let dirs: Vec<_> = if let Some(d) = dir {
                 vec![d]

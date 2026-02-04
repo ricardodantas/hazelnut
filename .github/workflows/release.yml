@@ -133,22 +133,22 @@ jobs:
         if: matrix.os != 'windows-latest'
         run: |
           cd target/${{ matrix.target }}/release
-          # Package both tidy (TUI) and tidyd (daemon)
-          tar -czvf ../../../tidy-${{ needs.release.outputs.version }}-${{ matrix.target }}.tar.gz tidy tidyd
+          # Package both hazelnut (TUI) and hazelnutd (daemon)
+          tar -czvf ../../../hazelnut-${{ needs.release.outputs.version }}-${{ matrix.target }}.tar.gz hazelnut hazelnutd
           cd ../../..
 
       - name: Package (Windows)
         if: matrix.os == 'windows-latest'
         run: |
           cd target/${{ matrix.target }}/release
-          7z a ../../../tidy-${{ needs.release.outputs.version }}-${{ matrix.target }}.zip tidy.exe tidyd.exe
+          7z a ../../../hazelnut-${{ needs.release.outputs.version }}-${{ matrix.target }}.zip hazelnut.exe hazelnutd.exe
           cd ../../..
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: tidy-${{ matrix.target }}
-          path: tidy-${{ needs.release.outputs.version }}-${{ matrix.target }}.*
+          name: hazelnut-${{ matrix.target }}
+          path: hazelnut-${{ needs.release.outputs.version }}-${{ matrix.target }}.*
 
   github-release:
     name: GitHub Release
@@ -170,7 +170,7 @@ jobs:
         run: |
           cd artifacts
           find . -type f \( -name "*.tar.gz" -o -name "*.zip" \) -exec mv {} . \;
-          rm -rf tidy-*/
+          rm -rf hazelnut-*/
           sha256sum * > SHA256SUMS.txt
           cat SHA256SUMS.txt
 
@@ -216,18 +216,18 @@ jobs:
       - name: Update formula
         run: |
           VERSION="${{ needs.release.outputs.version }}"
-          URL="https://github.com/ricardodantas/tidy/archive/refs/tags/v${VERSION}.tar.gz"
+          URL="https://github.com/ricardodantas/hazelnut/archive/refs/tags/v${VERSION}.tar.gz"
           
           # Download and calculate SHA256
-          curl -sL "$URL" -o tidy.tar.gz
-          SHA256=$(sha256sum tidy.tar.gz | cut -d' ' -f1)
+          curl -sL "$URL" -o hazelnut.tar.gz
+          SHA256=$(sha256sum hazelnut.tar.gz | cut -d' ' -f1)
           
           # Update formula
-          cat > homebrew-tap/Formula/tidy.rb << EOF
-          class Tidy < Formula
+          cat > homebrew-tap/Formula/hazelnut.rb << EOF
+          class Hazelnut < Formula
             desc "Terminal-based automated file organizer inspired by Hazel"
-            homepage "https://github.com/ricardodantas/tidy"
-            url "https://github.com/ricardodantas/tidy/archive/refs/tags/v${VERSION}.tar.gz"
+            homepage "https://github.com/ricardodantas/hazelnut"
+            url "https://github.com/ricardodantas/hazelnut/archive/refs/tags/v${VERSION}.tar.gz"
             sha256 "${SHA256}"
             license "MIT"
 
@@ -238,7 +238,7 @@ jobs:
             end
 
             test do
-              assert_match version.to_s, shell_output("#{bin}/tidy --version")
+              assert_match version.to_s, shell_output("#{bin}/hazelnut --version")
             end
           end
           EOF
@@ -248,6 +248,6 @@ jobs:
           cd homebrew-tap
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add Formula/tidy.rb
-          git commit -m "tidy: update to v${{ needs.release.outputs.version }}"
+          git add Formula/hazelnut.rb
+          git commit -m "hazelnut: update to v${{ needs.release.outputs.version }}"
           git push

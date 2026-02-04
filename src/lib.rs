@@ -1,4 +1,4 @@
-//! Tidy - Terminal-based automated file organizer
+//! Hazelnut - Terminal-based automated file organizer
 //!
 //! A Hazel-like file organization tool with a TUI interface.
 

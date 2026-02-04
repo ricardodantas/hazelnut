@@ -1,11 +1,11 @@
-# Contributing to Tidy
+# Contributing to Hazelnut
 
-Thank you for considering contributing to Tidy! 🧹
+Thank you for considering contributing to Hazelnut! 🧹
 
 ## Getting Started
 
 1. Fork the repository
-2. Clone your fork: `git clone https://github.com/YOUR_USERNAME/tidy`
+2. Clone your fork: `git clone https://github.com/YOUR_USERNAME/hazelnut`
 3. Create a branch: `git checkout -b feature/your-feature`
 4. Make your changes
 5. Run tests: `cargo test`
@@ -19,8 +19,8 @@ Thank you for considering contributing to Tidy! 🧹
 
 ```bash
 # Clone
-git clone https://github.com/ricardodantas/tidy
-cd tidy
+git clone https://github.com/ricardodantas/hazelnut
+cd hazelnut
 
 # Build
 cargo build
@@ -29,7 +29,7 @@ cargo build
 cargo run
 
 # Run daemon
-cargo run --bin tidyd run
+cargo run --bin hazelnutd run
 
 # Run with sample config
 cargo run -- --config examples/config.toml

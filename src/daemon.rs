@@ -1,4 +1,4 @@
-//! Tidy Daemon (tidyd)
+//! Hazelnut Daemon (hazelnutd)
 //!
 //! Background service that watches directories and applies rules.
 
@@ -7,8 +7,8 @@ use clap::Parser;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 #[derive(Parser, Debug)]
-#[command(name = "tidyd")]
-#[command(author, version, about = "Tidy background daemon")]
+#[command(name = "hazelnutd")]
+#[command(author, version, about = "Hazelnut background daemon")]
 struct Cli {
     /// Path to config file
     #[arg(short, long, value_name = "FILE")]
@@ -50,27 +50,27 @@ async fn main() -> Result<()> {
     // Initialize logging
     tracing_subscriber::registry()
         .with(tracing_subscriber::EnvFilter::new(
-            std::env::var("TIDY_LOG").unwrap_or_else(|_| "info".to_string()),
+            std::env::var("HAZELNUT_LOG").unwrap_or_else(|_| "info".to_string()),
         ))
         .with(tracing_subscriber::fmt::layer().with_target(false))
         .init();
 
     match cli.command {
         Commands::Start => {
-            println!("Starting tidy daemon...");
+            println!("Starting hazelnut daemon...");
             if cli.foreground {
                 run_daemon(cli.config).await?;
             } else {
                 // TODO: Daemonize
-                println!("Daemonization not implemented yet. Use --foreground or 'tidyd run'");
+                println!("Daemonization not implemented yet. Use --foreground or 'hazelnutd run'");
             }
         }
         Commands::Stop => {
-            println!("Stopping tidy daemon...");
+            println!("Stopping hazelnut daemon...");
             // TODO: Send stop signal via IPC
         }
         Commands::Restart => {
-            println!("Restarting tidy daemon...");
+            println!("Restarting hazelnut daemon...");
             // TODO: Stop then start
         }
         Commands::Status => {
@@ -93,15 +93,15 @@ async fn run_daemon(config_path: Option<std::path::PathBuf>) -> Result<()> {
     use tokio::signal;
     use tracing::info;
 
-    let config = tidy::Config::load(config_path.as_deref())?;
+    let config = hazelnut::Config::load(config_path.as_deref())?;
     info!(
         "Loaded config with {} watch paths and {} rules",
         config.watches.len(),
         config.rules.len()
     );
 
-    let engine = tidy::RuleEngine::new(config.rules);
-    let mut watcher = tidy::Watcher::new(engine)?;
+    let engine = hazelnut::RuleEngine::new(config.rules);
+    let mut watcher = hazelnut::Watcher::new(engine)?;
 
     for watch in &config.watches {
         info!("Watching: {}", watch.path.display());
