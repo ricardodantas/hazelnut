@@ -156,13 +156,48 @@ fn render_main(frame: &mut Frame, state: &AppState, area: Rect) {
 fn render_dashboard(frame: &mut Frame, state: &AppState, area: Rect) {
     let colors = state.theme.colors();
 
+    // Check if we need to show update banner
+    let has_update = state.update_available.is_some();
+    
     let chunks = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([
-            Constraint::Length(9), // Logo
-            Constraint::Min(0),    // Content
-        ])
+        .constraints(if has_update {
+            vec![
+                Constraint::Length(3), // Update banner
+                Constraint::Length(9), // Logo
+                Constraint::Min(0),    // Content
+            ]
+        } else {
+            vec![
+                Constraint::Length(9), // Logo
+                Constraint::Min(0),    // Content
+            ]
+        })
         .split(area);
+
+    let (logo_area, content_area) = if has_update {
+        // Render update banner
+        if let Some(ref latest) = state.update_available {
+            let banner = Paragraph::new(Line::from(vec![
+                Span::styled("  ⬆️  ", Style::default().fg(colors.warning)),
+                Span::styled("Update available: ", colors.text()),
+                Span::styled(format!("v{}", latest), Style::default().fg(colors.warning).add_modifier(Modifier::BOLD)),
+                Span::styled(" (current: ", colors.text_muted()),
+                Span::styled(format!("v{})", crate::VERSION), colors.text_muted()),
+                Span::styled(" — Run: ", colors.text_muted()),
+                Span::styled("cargo install hazelnut", Style::default().fg(colors.primary)),
+            ]))
+            .alignment(Alignment::Center)
+            .block(Block::default()
+                .borders(Borders::ALL)
+                .border_type(BorderType::Rounded)
+                .border_style(Style::default().fg(colors.warning)));
+            frame.render_widget(banner, chunks[0]);
+        }
+        (chunks[1], chunks[2])
+    } else {
+        (chunks[0], chunks[1])
+    };
 
     // Logo
     let logo_lines: Vec<Line> = LOGO
@@ -182,13 +217,13 @@ fn render_dashboard(frame: &mut Frame, state: &AppState, area: Rect) {
     let logo = Paragraph::new(logo_lines)
         .alignment(Alignment::Center)
         .block(Block::default());
-    frame.render_widget(logo, chunks[0]);
+    frame.render_widget(logo, logo_area);
 
     // Content area
     let content_chunks = Layout::default()
         .direction(Direction::Horizontal)
         .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
-        .split(chunks[1]);
+        .split(content_area);
 
     // Left: Stats
     let enabled_rules = state.config.rules.iter().filter(|r| r.enabled).count();

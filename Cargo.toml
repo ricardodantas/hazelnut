@@ -39,6 +39,8 @@ regex = "1.11"
 glob = "0.3"
 chrono = { version = "0.4", features = ["serde"] }
 open = "5.3"
+ureq = { version = "2.10", features = ["json"] }
+serde_json = "1.0"
 
 [dev-dependencies]
 tempfile = "3.19"

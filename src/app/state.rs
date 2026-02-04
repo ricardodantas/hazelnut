@@ -157,6 +157,9 @@ pub struct AppState {
 
     /// Watch editor state
     pub watch_editor: Option<WatchEditorState>,
+
+    /// Update available notification
+    pub update_available: Option<String>,
 }
 
 /// Available views in the TUI
@@ -217,7 +220,14 @@ impl AppState {
             daemon_running: is_daemon_running(),
             rule_editor: None,
             watch_editor: None,
+            update_available: None,
         };
+
+        // Check for updates in background
+        let update_check = crate::check_for_updates_timeout(std::time::Duration::from_secs(2));
+        if let crate::VersionCheck::UpdateAvailable { latest, .. } = update_check {
+            state.update_available = Some(latest);
+        }
 
         // Add welcome log entries
         state.log(LogLevel::Info, "🌰 Hazelnut started");
@@ -229,6 +239,11 @@ impl AppState {
                 state.config.watches.len()
             ),
         );
+
+        // Log update availability
+        if let Some(ref version) = state.update_available {
+            state.log(LogLevel::Warning, format!("Update available: v{} (current: v{})", version, crate::VERSION));
+        }
 
         state
     }
