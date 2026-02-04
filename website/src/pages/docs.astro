@@ -45,7 +45,20 @@ const baseUrl = import.meta.env.BASE_URL;
       
       <section id="installation">
         <h2>Installation</h2>
-        <p>Tidy is built with Rust and can be installed using Cargo:</p>
+        
+        <h3>Homebrew (Recommended)</h3>
+        <p>The easiest way to install Tidy on macOS or Linux:</p>
+        
+        <div class="code-block">
+          <div class="code-header">
+            <span>Homebrew</span>
+            <button class="copy-btn" data-copy="brew install ricardodantas/tap/tidy">Copy</button>
+          </div>
+          <pre><code>brew install ricardodantas/tap/tidy</code></pre>
+        </div>
+        
+        <h3>Cargo</h3>
+        <p>If you have Rust installed, you can use Cargo:</p>
         
         <div class="code-block">
           <div class="code-header">
@@ -55,9 +68,11 @@ const baseUrl = import.meta.env.BASE_URL;
           <pre><code>cargo install tidy-cli</code></pre>
         </div>
         
+        <h3>From Source</h3>
+        
         <div class="code-block">
           <div class="code-header">
-            <span>From source</span>
+            <span>Build from source</span>
             <button class="copy-btn" data-copy="git clone https://github.com/ricardodantas/tidy.git
 cd tidy
 cargo build --release">Copy</button>
@@ -69,7 +84,7 @@ cargo build --release</code></pre>
         
         <h3>Requirements</h3>
         <ul>
-          <li>Rust 1.93+</li>
+          <li>Rust 1.93+ (only for Cargo/source installation)</li>
           <li>Linux or macOS</li>
         </ul>
       </section>
