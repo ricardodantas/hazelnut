@@ -223,7 +223,11 @@ fn render_dashboard(frame: &mut Frame, state: &AppState, area: Rect) {
         Line::from(""),
         Line::from(vec![
             Span::styled("  🔌 Daemon:         ", colors.text_dim()),
-            Span::styled("Not connected", colors.text_error()),
+            if state.daemon_running {
+                Span::styled("Running", colors.text_success())
+            } else {
+                Span::styled("Not connected", colors.text_error())
+            },
         ]),
         Line::from(""),
         Line::from(vec![

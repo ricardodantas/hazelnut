@@ -5,6 +5,28 @@ use crate::rules::{Action, Condition, Rule};
 use crate::theme::Theme;
 use std::path::PathBuf;
 
+/// Check if the daemon is currently running by checking the PID file
+#[cfg(unix)]
+fn is_daemon_running() -> bool {
+    let pid_file = dirs::runtime_dir()
+        .or_else(dirs::state_dir)
+        .unwrap_or_else(|| PathBuf::from("/tmp"))
+        .join("hazelnutd.pid");
+
+    if let Ok(pid_str) = std::fs::read_to_string(&pid_file) {
+        if let Ok(pid) = pid_str.trim().parse::<i32>() {
+            // Check if process is running using kill -0
+            return unsafe { libc::kill(pid, 0) == 0 };
+        }
+    }
+    false
+}
+
+#[cfg(not(unix))]
+fn is_daemon_running() -> bool {
+    false
+}
+
 /// Input mode for the application
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum Mode {
@@ -192,7 +214,7 @@ impl AppState {
             frame: 0,
             theme_picker_index,
             settings_index: 0,
-            daemon_running: false,
+            daemon_running: is_daemon_running(),
             rule_editor: None,
             watch_editor: None,
         };
