@@ -14,21 +14,21 @@ const baseUrl = import.meta.env.BASE_URL;
           <li><a href="#quick-start">Quick Start</a></li>
           <li><a href="#architecture">Architecture</a></li>
         </ul>
-        
+
         <h3>Configuration</h3>
         <ul>
           <li><a href="#config-file">Config File</a></li>
           <li><a href="#general-settings">General Settings</a></li>
           <li><a href="#watch-folders">Watch Folders</a></li>
         </ul>
-        
+
         <h3>Rules</h3>
         <ul>
           <li><a href="#conditions">Conditions</a></li>
           <li><a href="#actions">Actions</a></li>
           <li><a href="#examples">Examples</a></li>
         </ul>
-        
+
         <h3>TUI</h3>
         <ul>
           <li><a href="#tui-overview">Overview</a></li>
@@ -36,19 +36,19 @@ const baseUrl = import.meta.env.BASE_URL;
         </ul>
       </nav>
     </aside>
-    
+
     <div class="docs-content">
       <div class="docs-header">
         <h1>Documentation</h1>
         <p>Everything you need to know about using Hazelnut to organize your files.</p>
       </div>
-      
+
       <section id="installation">
         <h2>Installation</h2>
-        
+
         <h3>Homebrew (Recommended)</h3>
         <p>The easiest way to install Hazelnut on macOS or Linux:</p>
-        
+
         <div class="code-block">
           <div class="code-header">
             <span>Homebrew</span>
@@ -56,20 +56,20 @@ const baseUrl = import.meta.env.BASE_URL;
           </div>
           <pre><code>brew install ricardodantas/tap/hazelnut</code></pre>
         </div>
-        
+
         <h3>Cargo</h3>
         <p>If you have Rust installed, you can use Cargo:</p>
-        
+
         <div class="code-block">
           <div class="code-header">
             <span>From crates.io</span>
-            <button class="copy-btn" data-copy="cargo install hazelnut-cli">Copy</button>
+            <button class="copy-btn" data-copy="cargo install hazelnut">Copy</button>
           </div>
-          <pre><code>cargo install hazelnut-cli</code></pre>
+          <pre><code>cargo install hazelnut</code></pre>
         </div>
-        
+
         <h3>From Source</h3>
-        
+
         <div class="code-block">
           <div class="code-header">
             <span>Build from source</span>
@@ -81,17 +81,17 @@ cargo build --release">Copy</button>
 cd hazelnut
 cargo build --release</code></pre>
         </div>
-        
+
         <h3>Requirements</h3>
         <ul>
           <li>Rust 1.93+ (only for Cargo/source installation)</li>
           <li>Linux or macOS</li>
         </ul>
       </section>
-      
+
       <section id="quick-start">
         <h2>Quick Start</h2>
-        
+
         <div class="callout warning">
           <strong>⚠️ Important:</strong> Hazelnut needs <strong>two things</strong> to work:
           <ol>
@@ -100,9 +100,9 @@ cargo build --release</code></pre>
           </ol>
           Rules alone won't do anything without at least one watch folder configured!
         </div>
-        
+
         <p>Get up and running in these steps:</p>
-        
+
         <div class="numbered-steps">
           <div class="numbered-step">
             <span class="number">1</span>
@@ -126,7 +126,7 @@ destination = "/home/youruser/Documents/PDFs"</code></pre>
               <p class="note">💡 Use full paths — the <code>~</code> shortcut is not expanded.</p>
             </div>
           </div>
-          
+
           <div class="numbered-step">
             <span class="number">2</span>
             <div>
@@ -138,7 +138,7 @@ destination = "/home/youruser/Documents/PDFs"</code></pre>
               </div>
             </div>
           </div>
-          
+
           <div class="numbered-step">
             <span class="number">3</span>
             <div>
@@ -152,11 +152,11 @@ destination = "/home/youruser/Documents/PDFs"</code></pre>
           </div>
         </div>
       </section>
-      
+
       <section id="architecture">
         <h2>Architecture</h2>
         <p>Hazelnut consists of two main components:</p>
-        
+
         <div class="info-cards">
           <div class="info-card">
             <h4><code>hazelnut</code></h4>
@@ -168,16 +168,16 @@ destination = "/home/youruser/Documents/PDFs"</code></pre>
           </div>
         </div>
       </section>
-      
+
       <section id="config-file">
         <h2>Config File</h2>
         <p>Hazelnut uses TOML for configuration. The default location is:</p>
         <div class="code-block inline">
           <pre><code>~/.config/hazelnut/config.toml</code></pre>
         </div>
-        
+
         <p>Here's a complete example configuration:</p>
-        
+
         <div class="code-block">
           <div class="code-header">
             <span>config.toml</span>
@@ -236,10 +236,10 @@ type = "move"
 destination = "~/Documents/PDFs"`}</code></pre>
         </div>
       </section>
-      
+
       <section id="general-settings">
         <h2>General Settings</h2>
-        
+
         <div class="table-wrapper">
           <table>
             <thead>
@@ -279,22 +279,22 @@ destination = "~/Documents/PDFs"`}</code></pre>
           </table>
         </div>
       </section>
-      
+
       <section id="watch-folders">
         <h2>Watch Folders</h2>
         <p>Configure which directories Hazelnut monitors for changes:</p>
-        
+
         <div class="callout info">
           <strong>💡 TUI Tip:</strong> You can manage watches directly in the terminal interface! Press <kbd>a</kbd> to add, <kbd>e</kbd> to edit, <kbd>d</kbd> to delete.
         </div>
-        
+
         <div class="code-block">
           <pre><code>{`[[watch]]
 path = "/home/user/Downloads"  # Use full paths
 recursive = false
 rules = []  # Empty = all rules apply`}</code></pre>
         </div>
-        
+
         <div class="table-wrapper">
           <table>
             <thead>
@@ -327,7 +327,7 @@ rules = []  # Empty = all rules apply`}</code></pre>
             </tbody>
           </table>
         </div>
-        
+
         <h3>Watch Editor Keybindings</h3>
         <div class="table-wrapper">
           <table>
@@ -354,18 +354,18 @@ rules = []  # Empty = all rules apply`}</code></pre>
           </table>
         </div>
       </section>
-      
+
       <section id="conditions">
         <h2>Conditions</h2>
         <p>All conditions must match for a rule to apply. Omit conditions you don't need.</p>
-        
+
         <h3>File Name</h3>
         <div class="code-block">
           <pre><code>{`[rule.condition]
 name_matches = "Screenshot*.png"  # Glob pattern
 name_regex = "^invoice_\\\\d+\\\\.pdf$"  # Regex pattern`}</code></pre>
         </div>
-        
+
         <h3>File Type</h3>
         <div class="code-block">
           <pre><code>{`[rule.condition]
@@ -374,14 +374,14 @@ extensions = ["jpg", "jpeg", "png", "gif"]  # Multiple
 is_directory = false
 is_hidden = true  # Files starting with .`}</code></pre>
         </div>
-        
+
         <h3>File Size</h3>
         <div class="code-block">
           <pre><code>{`[rule.condition]
 size_greater_than = 10485760  # > 10 MB (in bytes)
 size_less_than = 1048576  # < 1 MB`}</code></pre>
         </div>
-        
+
         <h3>File Age</h3>
         <div class="code-block">
           <pre><code>{`[rule.condition]
@@ -389,10 +389,10 @@ age_days_greater_than = 30  # Older than 30 days
 age_days_less_than = 7  # Newer than 7 days`}</code></pre>
         </div>
       </section>
-      
+
       <section id="actions">
         <h2>Actions</h2>
-        
+
         <h3>Move</h3>
         <div class="code-block">
           <pre><code>{`[rule.action]
@@ -401,7 +401,7 @@ destination = "~/Documents/PDFs"
 create_destination = true  # Create folder if missing
 overwrite = false  # Don't overwrite existing files`}</code></pre>
         </div>
-        
+
         <h3>Copy</h3>
         <div class="code-block">
           <pre><code>{`[rule.action]
@@ -410,14 +410,14 @@ destination = "~/Backup"
 create_destination = true
 overwrite = false`}</code></pre>
         </div>
-        
+
         <h3>Rename</h3>
         <div class="code-block">
           <pre><code>{`[rule.action]
 type = "rename"
 pattern = "{date}_{name}.{ext}"`}</code></pre>
         </div>
-        
+
         <p>Available pattern variables:</p>
         <ul>
           <li><code>{`{name}`}</code> - Filename without extension</li>
@@ -429,7 +429,7 @@ pattern = "{date}_{name}.{ext}"`}</code></pre>
           <li><code>{`{datetime}`}</code> - Current datetime</li>
           <li><code>{`{date:FORMAT}`}</code> - Custom date format</li>
         </ul>
-        
+
         <h3>Trash / Delete</h3>
         <div class="code-block">
           <pre><code>{`[rule.action]
@@ -438,7 +438,7 @@ type = "trash"  # Safe, recoverable
 # Or permanently delete (⚠️ dangerous!)
 type = "delete"`}</code></pre>
         </div>
-        
+
         <h3>Run Command</h3>
         <div class="code-block">
           <pre><code>{`[rule.action]
@@ -446,7 +446,7 @@ type = "run"
 command = "convert"
 args = ["{path}", "-resize", "50%", "{dir}/{name}_small.{ext}"]`}</code></pre>
         </div>
-        
+
         <h3>Archive</h3>
         <div class="code-block">
           <pre><code>{`[rule.action]
@@ -455,10 +455,10 @@ destination = "~/Archives"
 delete_original = false`}</code></pre>
         </div>
       </section>
-      
+
       <section id="examples">
         <h2>Examples</h2>
-        
+
         <h3>Organize Screenshots</h3>
         <div class="code-block">
           <pre><code>{`[[rule]]
@@ -471,7 +471,7 @@ name_matches = "Screenshot*.png"
 type = "move"
 destination = "~/Pictures/Screenshots"`}</code></pre>
         </div>
-        
+
         <h3>Clean Old Downloads</h3>
         <div class="code-block">
           <pre><code>{`[[rule]]
@@ -484,7 +484,7 @@ extensions = ["tmp", "log", "bak"]
 [rule.action]
 type = "trash"`}</code></pre>
         </div>
-        
+
         <h3>Sort Media Files</h3>
         <div class="code-block">
           <pre><code>{`[[rule]]
@@ -507,7 +507,7 @@ extensions = ["mp4", "mov", "avi", "mkv"]
 type = "move"
 destination = "~/Videos/Unsorted"`}</code></pre>
         </div>
-        
+
         <h3>Date-Prefix Invoices</h3>
         <div class="code-block">
           <pre><code>{`[[rule]]
@@ -521,16 +521,16 @@ type = "rename"
 pattern = "{date:YYYY-MM-DD}_{name}.{ext}"`}</code></pre>
         </div>
       </section>
-      
+
       <section id="tui-overview">
         <h2>TUI Overview</h2>
         <p>The TUI provides a beautiful interface for managing Hazelnut. Launch it with:</p>
-        
+
         <div class="code-block inline">
           <pre><code>hazelnut</code></pre>
           <button class="copy-btn small" data-copy="hazelnut">Copy</button>
         </div>
-        
+
         <div class="screenshot-gallery">
           <figure>
             <img src={`${baseUrl}screenshots/01-dashboard.png`} alt="Dashboard view" loading="lazy" />
@@ -546,10 +546,10 @@ pattern = "{date:YYYY-MM-DD}_{name}.{ext}"`}</code></pre>
           </figure>
         </div>
       </section>
-      
+
       <section id="keyboard-shortcuts">
         <h2>Keyboard Shortcuts</h2>
-        
+
         <h3>Navigation</h3>
         <div class="table-wrapper">
           <table>
@@ -587,7 +587,7 @@ pattern = "{date:YYYY-MM-DD}_{name}.{ext}"`}</code></pre>
             </tbody>
           </table>
         </div>
-        
+
         <h3>Rules View</h3>
         <div class="table-wrapper">
           <table>
@@ -617,7 +617,7 @@ pattern = "{date:YYYY-MM-DD}_{name}.{ext}"`}</code></pre>
             </tbody>
           </table>
         </div>
-        
+
         <h3>General</h3>
         <div class="table-wrapper">
           <table>
@@ -643,7 +643,7 @@ pattern = "{date:YYYY-MM-DD}_{name}.{ext}"`}</code></pre>
             </tbody>
           </table>
         </div>
-        
+
         <h3>Watches View</h3>
         <div class="table-wrapper">
           <table>
@@ -669,7 +669,7 @@ pattern = "{date:YYYY-MM-DD}_{name}.{ext}"`}</code></pre>
             </tbody>
           </table>
         </div>
-        
+
         <h3>Rule Editor / Watch Editor</h3>
         <div class="table-wrapper">
           <table>
@@ -710,38 +710,38 @@ pattern = "{date:YYYY-MM-DD}_{name}.{ext}"`}</code></pre>
     border-radius: 8px;
     margin: 1.5rem 0;
   }
-  
+
   .callout.warning {
     background: rgba(250, 179, 135, 0.1);
     border-left: 4px solid var(--primary);
   }
-  
+
   .callout.info {
     background: rgba(137, 180, 250, 0.1);
     border-left: 4px solid #89b4fa;
   }
-  
+
   .callout ol {
     margin: 0.75rem 0 0 1.25rem;
     padding: 0;
   }
-  
+
   .callout li {
     margin: 0.25rem 0;
   }
-  
+
   .note {
     font-size: 0.9rem;
     color: var(--text-secondary);
     margin-top: 0.5rem;
   }
-  
+
   .docs-layout {
     display: flex;
     padding-top: var(--nav-height);
     min-height: calc(100vh - var(--nav-height));
   }
-  
+
   .docs-sidebar {
     width: 260px;
     flex-shrink: 0;
@@ -753,7 +753,7 @@ pattern = "{date:YYYY-MM-DD}_{name}.{ext}"`}</code></pre>
     overflow-y: auto;
     padding: 2rem 1.5rem;
   }
-  
+
   .docs-nav h3 {
     font-size: 0.75rem;
     text-transform: uppercase;
@@ -762,58 +762,58 @@ pattern = "{date:YYYY-MM-DD}_{name}.{ext}"`}</code></pre>
     margin-top: 1.5rem;
     margin-bottom: 0.75rem;
   }
-  
+
   .docs-nav h3:first-child {
     margin-top: 0;
   }
-  
+
   .docs-nav ul {
     list-style: none;
   }
-  
+
   .docs-nav li {
     margin-bottom: 0.5rem;
   }
-  
+
   .docs-nav a {
     color: var(--text-primary);
     font-size: 0.9rem;
     opacity: 0.8;
     transition: opacity 0.2s, color 0.2s;
   }
-  
+
   .docs-nav a:hover {
     opacity: 1;
     color: var(--accent-purple);
   }
-  
+
   .docs-content {
     flex: 1;
     max-width: 900px;
     padding: 3rem 4rem;
   }
-  
+
   .docs-header {
     margin-bottom: 3rem;
     padding-bottom: 2rem;
     border-bottom: 1px solid var(--bg-tertiary);
   }
-  
+
   .docs-header h1 {
     font-size: 2.5rem;
     margin-bottom: 0.5rem;
   }
-  
+
   .docs-header p {
     color: var(--text-secondary);
     font-size: 1.125rem;
   }
-  
+
   section {
     margin-bottom: 4rem;
     scroll-margin-top: calc(var(--nav-height) + 2rem);
   }
-  
+
   section h2 {
     font-size: 1.75rem;
     margin-bottom: 1rem;
@@ -821,34 +821,34 @@ pattern = "{date:YYYY-MM-DD}_{name}.{ext}"`}</code></pre>
     padding-bottom: 0.5rem;
     border-bottom: 1px solid var(--bg-tertiary);
   }
-  
+
   section h3 {
     font-size: 1.25rem;
     margin-top: 2rem;
     margin-bottom: 0.75rem;
     color: var(--accent-cyan);
   }
-  
+
   section h4 {
     font-size: 1rem;
     margin-bottom: 0.5rem;
   }
-  
+
   section p {
     margin-bottom: 1rem;
     color: var(--text-secondary);
   }
-  
+
   section ul {
     margin-bottom: 1rem;
     padding-left: 1.5rem;
     color: var(--text-secondary);
   }
-  
+
   section li {
     margin-bottom: 0.5rem;
   }
-  
+
   .code-block {
     background: var(--bg-secondary);
     border: 1px solid var(--bg-tertiary);
@@ -856,7 +856,7 @@ pattern = "{date:YYYY-MM-DD}_{name}.{ext}"`}</code></pre>
     margin-bottom: 1.5rem;
     overflow: hidden;
   }
-  
+
   .code-block.inline {
     display: inline-flex;
     align-items: center;
@@ -864,14 +864,14 @@ pattern = "{date:YYYY-MM-DD}_{name}.{ext}"`}</code></pre>
     padding: 0.5rem 1rem;
     margin-bottom: 1rem;
   }
-  
+
   .code-block.inline pre {
     padding: 0;
     margin: 0;
     background: none;
     border: none;
   }
-  
+
   .code-header {
     display: flex;
     justify-content: space-between;
@@ -881,14 +881,14 @@ pattern = "{date:YYYY-MM-DD}_{name}.{ext}"`}</code></pre>
     font-size: 0.8rem;
     color: var(--text-secondary);
   }
-  
+
   .code-block pre {
     margin: 0;
     padding: 1rem;
     border: none;
     border-radius: 0;
   }
-  
+
   .copy-btn {
     background: var(--bg-primary);
     border: none;
@@ -900,34 +900,34 @@ pattern = "{date:YYYY-MM-DD}_{name}.{ext}"`}</code></pre>
     font-family: var(--font-sans);
     transition: all 0.2s;
   }
-  
+
   .copy-btn:hover {
     background: var(--accent-purple);
     color: var(--bg-primary);
   }
-  
+
   .copy-btn.small {
     padding: 0.2rem 0.4rem;
     font-size: 0.7rem;
   }
-  
+
   .table-wrapper {
     overflow-x: auto;
     margin-bottom: 1.5rem;
   }
-  
+
   table {
     width: 100%;
     border-collapse: collapse;
     font-size: 0.9rem;
   }
-  
+
   th, td {
     text-align: left;
     padding: 0.75rem 1rem;
     border-bottom: 1px solid var(--bg-tertiary);
   }
-  
+
   th {
     background: var(--bg-secondary);
     color: var(--text-secondary);
@@ -936,15 +936,15 @@ pattern = "{date:YYYY-MM-DD}_{name}.{ext}"`}</code></pre>
     font-size: 0.75rem;
     letter-spacing: 0.05em;
   }
-  
+
   td {
     color: var(--text-primary);
   }
-  
+
   td code {
     font-size: 0.8rem;
   }
-  
+
   kbd {
     background: var(--bg-tertiary);
     border: 1px solid var(--text-secondary);
@@ -953,20 +953,20 @@ pattern = "{date:YYYY-MM-DD}_{name}.{ext}"`}</code></pre>
     font-family: var(--font-mono);
     font-size: 0.85em;
   }
-  
+
   .numbered-steps {
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
     margin-top: 1.5rem;
   }
-  
+
   .numbered-step {
     display: flex;
     gap: 1.5rem;
     align-items: flex-start;
   }
-  
+
   .numbered-step .number {
     width: 32px;
     height: 32px;
@@ -979,102 +979,102 @@ pattern = "{date:YYYY-MM-DD}_{name}.{ext}"`}</code></pre>
     font-weight: 700;
     flex-shrink: 0;
   }
-  
+
   .info-cards {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 1rem;
     margin-top: 1rem;
   }
-  
+
   .info-card {
     background: var(--bg-secondary);
     padding: 1.5rem;
     border-radius: 8px;
     border: 1px solid var(--bg-tertiary);
   }
-  
+
   .info-card h4 {
     color: var(--accent-green);
     margin-bottom: 0.5rem;
   }
-  
+
   .info-card p {
     margin: 0;
     font-size: 0.9rem;
   }
-  
+
   .screenshot-gallery {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 1.5rem;
     margin-top: 1.5rem;
   }
-  
+
   .screenshot-gallery figure {
     margin: 0;
   }
-  
+
   .screenshot-gallery img {
     width: 100%;
     border-radius: 8px;
     border: 1px solid var(--bg-tertiary);
   }
-  
+
   .screenshot-gallery figcaption {
     margin-top: 0.75rem;
     font-size: 0.875rem;
     color: var(--text-secondary);
     text-align: center;
   }
-  
+
   @media (max-width: 1024px) {
     .docs-sidebar {
       display: none;
     }
-    
+
     .docs-content {
       padding: 2rem 1.5rem;
     }
   }
-  
+
   @media (max-width: 768px) {
     .docs-content {
       padding: 1.5rem 1rem;
     }
-    
+
     .numbered-step {
       flex-direction: column;
       gap: 0.75rem;
     }
-    
+
     .screenshot-gallery {
       grid-template-columns: 1fr;
     }
-    
+
     pre {
       font-size: 0.75rem;
       padding: 0.75rem;
     }
-    
+
     h1 {
       font-size: 2rem;
     }
-    
+
     h2 {
       font-size: 1.5rem;
     }
-    
+
     h3 {
       font-size: 1.25rem;
     }
-    
+
     table {
       display: block;
       overflow-x: auto;
       font-size: 0.875rem;
     }
-    
+
     .keybindings-section table td:first-child {
       white-space: nowrap;
     }
@@ -1087,14 +1087,14 @@ pattern = "{date:YYYY-MM-DD}_{name}.{ext}"`}</code></pre>
     btn.addEventListener('click', async () => {
       const text = btn.getAttribute('data-copy');
       if (!text) return;
-      
+
       try {
         await navigator.clipboard.writeText(text);
         const originalText = btn.textContent;
         btn.textContent = 'Copied!';
         btn.style.background = 'var(--accent-green)';
         btn.style.color = 'var(--bg-primary)';
-        
+
         setTimeout(() => {
           btn.textContent = originalText;
           btn.style.background = '';

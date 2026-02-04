@@ -110,7 +110,7 @@ brew install ricardodantas/tap/hazelnut
 #### Cargo
 
 ```bash
-cargo install hazelnut-cli
+cargo install hazelnut
 ```
 
 #### From Source
