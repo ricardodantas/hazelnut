@@ -14,6 +14,10 @@ on:
           - minor
           - major
 
+concurrency:
+  group: release
+  cancel-in-progress: false
+
 env:
   CARGO_TERM_COLOR: always
 
@@ -49,7 +53,7 @@ jobs:
           # Get current version
           CURRENT=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[0].version')
           echo "Current version: $CURRENT"
-          
+
           if [ "${{ inputs.bump }}" = "none" ]; then
             echo "Releasing current version without bump"
             NEW="$CURRENT"
@@ -59,7 +63,7 @@ jobs:
             NEW=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[0].version')
             echo "New version: $NEW"
           fi
-          
+
           echo "version=$NEW" >> $GITHUB_OUTPUT
 
       - name: Commit version bump
@@ -71,11 +75,11 @@ jobs:
       - name: Create and push tag
         run: |
           VERSION="v${{ steps.bump.outputs.version }}"
-          
+
           # Check if tag already exists
           if git rev-parse "$VERSION" >/dev/null 2>&1; then
             echo "Tag $VERSION already exists"
-            
+
             # If bump=none, we're re-releasing - delete and recreate the tag
             if [ "${{ inputs.bump }}" = "none" ]; then
               echo "Re-releasing: deleting existing tag..."
@@ -86,7 +90,7 @@ jobs:
               exit 1
             fi
           fi
-          
+
           git tag "$VERSION"
           git push origin main --tags
 
@@ -234,16 +238,16 @@ jobs:
       - name: Update formula
         run: |
           VERSION="${{ needs.release.outputs.version }}"
-          
+
           # Download SHA256SUMS
           curl -sL "https://github.com/ricardodantas/hazelnut/releases/download/v${VERSION}/SHA256SUMS.txt" -o SHA256SUMS.txt
-          
+
           # Extract checksums for each platform
           SHA_AARCH64_DARWIN=$(grep "aarch64-apple-darwin" SHA256SUMS.txt | cut -d' ' -f1)
           SHA_X86_64_DARWIN=$(grep "x86_64-apple-darwin" SHA256SUMS.txt | cut -d' ' -f1)
           SHA_AARCH64_LINUX=$(grep "aarch64-unknown-linux-gnu" SHA256SUMS.txt | cut -d' ' -f1)
           SHA_X86_64_LINUX=$(grep "x86_64-unknown-linux-gnu" SHA256SUMS.txt | cut -d' ' -f1)
-          
+
           # Update formula with pre-built binaries
           cat > homebrew-tap/Formula/hazelnut.rb << EOF
           class Hazelnut < Formula
