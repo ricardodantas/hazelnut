@@ -1,0 +1,138 @@
+# Hazelnut
+
+> A beautiful terminal-based file organizer inspired by Hazel
+
+Hazelnut is a Rust-based terminal application for automated file organization. Watch folders for changes and automatically organize files using flexible rules with actions like move, copy, rename, archive, delete, or run custom scripts.
+
+## Quick Facts
+
+- **Type:** Command-line application / TUI + Daemon
+- **Language:** Rust
+- **License:** MIT
+- **Platforms:** macOS, Linux (daemon is Unix-only; TUI works on Windows)
+- **Repository:** https://github.com/ricardodantas/hazelnut
+- **Documentation:** https://hazelnut.dev/docs
+- **Author:** Ricardo Dantas
+- **Inspired by:** Hazel (macOS app)
+
+## Installation
+
+### Homebrew (macOS/Linux)
+```bash
+brew install ricardodantas/tap/hazelnut
+```
+
+### Cargo (all platforms)
+```bash
+cargo install hazelnut
+```
+
+### Binary Downloads
+Pre-built binaries available at: https://github.com/ricardodantas/hazelnut/releases
+
+## Key Features
+
+- **Watch Folders**: Monitor directories for new and changed files in real-time
+- **Flexible Rules**: Match files by name (glob/regex), extension, size, age
+- **Smart Actions**: Move, copy, rename, archive, delete, or run custom scripts
+- **Beautiful TUI**: Manage rules and monitor activity with 15 color themes
+- **Background Daemon**: Runs quietly, processing files automatically
+- **Visual Rule Editor**: Create rules directly in the TUI (press 'n')
+- **Auto-Update**: Built-in update checker with one-key update
+
+## Architecture
+
+Hazelnut has two binaries:
+- `hazelnut` - The TUI for viewing status and managing rules
+- `hazelnutd` - The background daemon that watches folders and applies rules
+
+## Usage
+
+```bash
+# Start the daemon
+hazelnutd start
+
+# Launch the TUI
+hazelnut
+
+# Check daemon status
+hazelnut status
+
+# Stop the daemon
+hazelnutd stop
+```
+
+## Configuration
+
+Config file: `~/.config/hazelnut/config.toml`
+
+### Example Configuration
+
+```toml
+# Folders to watch
+[[watch]]
+path = "~/Downloads"
+recursive = false
+
+# Rule: Move screenshots to Pictures
+[[rule]]
+name = "Screenshots"
+
+[rule.condition]
+name_matches = "Screenshot*.png"
+
+[rule.action]
+type = "move"
+destination = "~/Pictures/Screenshots"
+
+# Rule: Clean old files
+[[rule]]
+name = "Clean old downloads"
+
+[rule.condition]
+age_days_greater_than = 30
+
+[rule.action]
+type = "trash"
+```
+
+## Condition Types
+
+- `name_matches` - Glob pattern (e.g., "*.pdf")
+- `name_regex` - Regular expression
+- `extension` - File extension (e.g., "pdf")
+- `size_greater_than` - Minimum file size
+- `size_less_than` - Maximum file size
+- `age_days_greater_than` - Files older than N days
+- `age_days_less_than` - Files newer than N days
+
+## Action Types
+
+- `move` - Move file to destination
+- `copy` - Copy file to destination
+- `rename` - Rename file with pattern
+- `archive` - Create zip archive
+- `trash` - Move to system trash
+- `delete` - Permanently delete
+- `run` - Execute shell command
+
+## Keyboard Shortcuts (TUI)
+
+- `j`/`k`: Navigate
+- `Tab`: Switch panels
+- `n`: Create new rule
+- `e`: Edit rule
+- `d`: Delete rule
+- `D`: Toggle daemon
+- `t`: Theme picker
+- `L`: View logs
+- `?`: Help
+- `q`: Quit
+
+## Links
+
+- Website: https://hazelnut.dev
+- GitHub: https://github.com/ricardodantas/hazelnut
+- Issues: https://github.com/ricardodantas/hazelnut/issues
+- Themes: https://hazelnut.dev/themes
+- Documentation: https://hazelnut.dev/docs

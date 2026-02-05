@@ -2,52 +2,141 @@
 interface Props {
   title: string;
   description?: string;
+  canonical?: string;
+  keywords?: string[];
+  image?: string;
+  type?: 'website' | 'article';
 }
 
-const { title, description = 'A terminal-based automated file organizer inspired by Hazel' } = Astro.props;
+const {
+  title,
+  description = 'Hazelnut is a beautiful terminal-based file organizer inspired by Hazel. Automatically organize files with flexible rules, smart actions, and a gorgeous TUI.',
+  canonical,
+  keywords = ['file organizer', 'hazel alternative', 'terminal', 'tui', 'rust', 'cli', 'automation', 'file management', 'mac', 'linux', 'folder watch'],
+  image = '/og-image.png',
+  type = 'website'
+} = Astro.props;
+
 const baseUrl = import.meta.env.BASE_URL;
+const siteUrl = 'https://hazelnut.dev';
+const canonicalUrl = canonical ? `${siteUrl}${canonical}` : `${siteUrl}${Astro.url.pathname}`;
+
+// JSON-LD structured data for software application
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Hazelnut",
+  "description": description,
+  "url": siteUrl,
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "macOS, Linux",
+  "softwareVersion": "0.2.21",
+  "author": {
+    "@type": "Person",
+    "name": "Ricardo Dantas",
+    "url": "https://github.com/ricardodantas"
+  },
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "license": "https://opensource.org/licenses/MIT",
+  "downloadUrl": "https://github.com/ricardodantas/hazelnut/releases",
+  "screenshot": `${siteUrl}/screenshots/01-dashboard.png`,
+  "featureList": [
+    "Watch folders for changes",
+    "Flexible rule-based matching",
+    "Move, copy, rename, trash actions",
+    "Run custom shell scripts",
+    "Beautiful TUI interface",
+    "15 color themes",
+    "Background daemon",
+    "Visual rule editor"
+  ],
+  "keywords": keywords.join(", "),
+  "programmingLanguage": "Rust",
+  "codeRepository": "https://github.com/ricardodantas/hazelnut"
+};
 ---
 
 <!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="description" content={description} />
-    <meta name="viewport" content="width=device-width" />
-    <link rel="icon" type="image/svg+xml" href={`${baseUrl}favicon.svg`} />
-    <meta name="generator" content={Astro.generator} />
-    <title>{title}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
 
-    <!-- Open Graph -->
+    <!-- Primary Meta Tags -->
+    <title>{title}</title>
+    <meta name="title" content={title} />
+    <meta name="description" content={description} />
+    <meta name="keywords" content={keywords.join(', ')} />
+    <meta name="author" content="Ricardo Dantas" />
+    <meta name="robots" content="index, follow" />
+    <meta name="language" content="English" />
+    <meta name="generator" content={Astro.generator} />
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href={canonicalUrl} />
+
+    <!-- Favicons -->
+    <link rel="icon" type="image/svg+xml" href={`${baseUrl}favicon.svg`} />
+    <link rel="apple-touch-icon" sizes="180x180" href={`${baseUrl}apple-touch-icon.png`} />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content={type} />
+    <meta property="og:url" content={canonicalUrl} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
-    <meta property="og:type" content="website" />
-    <meta property="og:image" content={`${baseUrl}og-image.png`} />
+    <meta property="og:image" content={`${siteUrl}${image}`} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:site_name" content="Hazelnut" />
+    <meta property="og:locale" content="en_US" />
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content={canonicalUrl} />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={`${siteUrl}${image}`} />
+    <meta name="twitter:creator" content="@ricardodantas" />
+
+    <!-- Additional SEO -->
+    <meta name="application-name" content="Hazelnut" />
+    <meta name="apple-mobile-web-app-title" content="Hazelnut" />
+    <meta name="theme-color" content="#282a36" />
+    <meta name="msapplication-TileColor" content="#282a36" />
+
+    <!-- Structured Data (JSON-LD) -->
+    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+
+    <!-- Preconnect for performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   </head>
   <body>
-    <nav class="navbar">
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <nav class="navbar" role="navigation" aria-label="Main navigation">
       <div class="nav-container">
-        <a href={baseUrl} class="nav-logo">
-          <span class="logo-icon">🌰</span>
+        <a href={baseUrl} class="nav-logo" aria-label="Hazelnut home">
+          <span class="logo-icon" aria-hidden="true">🌰</span>
           <span class="logo-text">Hazelnut</span>
         </a>
-        <div class="nav-links">
+        <div class="nav-links" id="nav-links">
           <a href={baseUrl}>Home</a>
           <a href={`${baseUrl}docs`}>Documentation</a>
           <a href={`${baseUrl}themes`}>Themes</a>
-          <a href="https://github.com/ricardodantas/hazelnut" target="_blank" rel="noopener" class="github-link">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+          <a href="https://github.com/ricardodantas/hazelnut" target="_blank" rel="noopener noreferrer" class="github-link">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
               <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
             </svg>
-            GitHub
+            <span>GitHub</span>
           </a>
         </div>
-        <button class="nav-toggle" aria-label="Toggle navigation">
+        <button class="nav-toggle" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-links">
           <span></span>
           <span></span>
           <span></span>
@@ -55,20 +144,21 @@ const baseUrl = import.meta.env.BASE_URL;
       </div>
     </nav>
 
-    <main>
+    <main id="main-content" role="main">
       <slot />
     </main>
 
-    <footer>
+    <footer role="contentinfo">
       <div class="footer-container">
         <p>Made with ❤️ and 🦀 for terminal enthusiasts</p>
         <p class="footer-links">
-          <a href="https://github.com/ricardodantas/hazelnut" target="_blank" rel="noopener">GitHub</a>
-          <span>•</span>
-          <a href="https://github.com/ricardodantas/hazelnut/issues" target="_blank" rel="noopener">Issues</a>
-          <span>•</span>
-          <a href="https://github.com/ricardodantas/hazelnut/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a>
+          <a href="https://github.com/ricardodantas/hazelnut" target="_blank" rel="noopener noreferrer">GitHub</a>
+          <span aria-hidden="true">•</span>
+          <a href="https://github.com/ricardodantas/hazelnut/issues" target="_blank" rel="noopener noreferrer">Issues</a>
+          <span aria-hidden="true">•</span>
+          <a href="https://github.com/ricardodantas/hazelnut/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">MIT License</a>
         </p>
+        <p class="footer-copyright">© 2024-2026 Ricardo Dantas. Open source under MIT License.</p>
       </div>
     </footer>
   </body>
@@ -130,6 +220,27 @@ const baseUrl = import.meta.env.BASE_URL;
 
   a:hover {
     color: var(--accent-pink);
+  }
+
+  a:focus-visible {
+    outline: 2px solid var(--accent-purple);
+    outline-offset: 2px;
+  }
+
+  /* Skip link for accessibility */
+  .skip-link {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: var(--accent-purple);
+    color: var(--bg-primary);
+    padding: 8px 16px;
+    z-index: 9999;
+    font-weight: 600;
+  }
+
+  .skip-link:focus {
+    top: 0;
   }
 
   code {
@@ -267,6 +378,12 @@ const baseUrl = import.meta.env.BASE_URL;
     margin: 0 0.5rem;
   }
 
+  .footer-copyright {
+    margin-top: 1rem;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+  }
+
   /* Mobile */
   @media (max-width: 768px) {
     .nav-links {
@@ -308,8 +425,13 @@ const baseUrl = import.meta.env.BASE_URL;
 </style>
 
 <script>
-  // Mobile nav toggle
-  document.querySelector('.nav-toggle')?.addEventListener('click', () => {
-    document.querySelector('.nav-links')?.classList.toggle('active');
+  // Mobile nav toggle with accessibility
+  const navToggle = document.querySelector('.nav-toggle');
+  const navLinks = document.querySelector('.nav-links');
+
+  navToggle?.addEventListener('click', () => {
+    const isExpanded = navToggle.getAttribute('aria-expanded') === 'true';
+    navToggle.setAttribute('aria-expanded', (!isExpanded).toString());
+    navLinks?.classList.toggle('active');
   });
 </script>

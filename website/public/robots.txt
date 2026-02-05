@@ -1,0 +1,12 @@
+# Hazelnut - Terminal File Organizer
+# https://hazelnut.dev
+
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://hazelnut.dev/sitemap.xml
+
+# AI/LLM agents
+# See llms.txt for structured information about this software
+# https://hazelnut.dev/llms.txt
