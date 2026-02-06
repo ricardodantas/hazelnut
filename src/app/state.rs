@@ -229,13 +229,6 @@ impl AppState {
             pending_update: false,
         };
 
-        // Check for updates in background using crates.io API (no rate limits)
-        let update_check =
-            crate::check_for_updates_crates_io_timeout(std::time::Duration::from_secs(2));
-        if let crate::VersionCheck::UpdateAvailable { latest, .. } = update_check {
-            state.update_available = Some(latest);
-        }
-
         // Add welcome log entries
         state.log(LogLevel::Info, "🌰 Hazelnut started");
         state.log(
@@ -247,19 +240,20 @@ impl AppState {
             ),
         );
 
-        // Log update availability
-        if let Some(ref version) = state.update_available {
-            state.log(
-                LogLevel::Warning,
-                format!(
-                    "Update available: v{} (current: v{})",
-                    version,
-                    crate::VERSION
-                ),
-            );
-        }
-
         state
+    }
+
+    /// Set update available (called from background task)
+    pub fn set_update_available(&mut self, version: String) {
+        self.update_available = Some(version.clone());
+        self.log(
+            LogLevel::Warning,
+            format!(
+                "Update available: v{} (current: v{})",
+                version,
+                crate::VERSION
+            ),
+        );
     }
 
     /// Get the currently selected rule, if any
