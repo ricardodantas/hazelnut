@@ -38,7 +38,7 @@ Pre-built binaries available at: https://github.com/ricardodantas/hazelnut/relea
 - **Smart Actions**: Move, copy, rename, archive, delete, or run custom scripts
 - **Beautiful TUI**: Manage rules and monitor activity with 15 color themes
 - **Background Daemon**: Runs quietly, processing files automatically
-- **Visual Rule Editor**: Create rules directly in the TUI (press 'n')
+- **Desktop Notifications**: Get alerted on errors (cross-platform: Linux, macOS, Windows)
 - **Auto-Update**: Built-in update checker with one-key update or `hazelnut update` CLI
 
 ## Architecture
@@ -77,6 +77,7 @@ State files (PID, logs): `~/.local/state/hazelnut/`
 ```toml
 [general]
 theme = "dracula"
+notifications_enabled = true  # Desktop notifications on errors
 
 # Folders to watch
 [[watch]]

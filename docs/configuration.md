@@ -96,7 +96,27 @@ The `[general]` section configures global behavior.
 | `log_level` | string | `"info"` | Logging verbosity: `trace`, `debug`, `info`, `warn`, `error` |
 | `log_file` | string | none | Path to log file. If not set, logs to stdout |
 | `debounce_seconds` | int | `2` | Wait time before processing after file change |
+| `polling_interval_secs` | int | `5` | How often to check for file changes |
+| `log_retention` | int | `500` | Maximum activity log entries to keep |
+| `start_daemon_on_launch` | bool | `false` | Auto-start daemon when TUI opens |
+| `notifications_enabled` | bool | `false` | Show desktop notifications on errors |
 | `theme` | string | `"dracula"` | TUI color theme |
+
+### Desktop Notifications
+
+Enable desktop notifications to get alerted when something goes wrong:
+
+```toml
+[general]
+notifications_enabled = true
+```
+
+Notifications are sent only for errors (not noisy):
+- Watch folder missing or inaccessible
+- Rule processing failures
+- Command execution errors
+
+Works cross-platform: Linux (libnotify), macOS (native), Windows (toast).
 
 ### Available Themes
 

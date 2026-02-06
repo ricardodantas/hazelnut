@@ -92,7 +92,7 @@ Human-readable TOML config that's easy to write and maintain.
 | 🏷️ **Multiple Extensions** | Match any of multiple file types |
 | 📂 **Recursive Watching** | Monitor subdirectories automatically |
 | 🎨 **15 Built-in Themes** | From Dracula to Cyberpunk |
-| 🔄 **Dry Run Mode** | Preview what would happen before applying |
+| 🔔 **Desktop Notifications** | Get alerted on errors (cross-platform) |
 | 📋 **Activity Log** | Full history of all file operations |
 
 <br>
@@ -210,10 +210,14 @@ log_level = "info"
 # Optional log file path
 log_file = "~/.local/share/hazelnut/hazelnut.log"
 
-# Preview actions without executing (great for testing)
-
 # Wait time (seconds) before processing a file after change detected
 debounce_seconds = 2
+
+# How often to check for file changes (seconds)
+polling_interval_secs = 5
+
+# Desktop notifications on errors (cross-platform)
+notifications_enabled = true
 
 # Theme for the TUI
 theme = "catppuccin-mocha"
