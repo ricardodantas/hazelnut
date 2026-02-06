@@ -297,10 +297,11 @@ impl AppState {
 
     /// Load daemon log entries from the log file
     pub fn load_daemon_logs(&mut self) {
-        let log_path = dirs::state_dir()
-            .or_else(dirs::data_local_dir)
+        // Use ~/.local/state/hazelnut/ on all platforms for consistency
+        // This matches the path used by the daemon
+        let log_path = dirs::home_dir()
+            .map(|h| h.join(".local").join("state").join("hazelnut"))
             .unwrap_or_else(|| PathBuf::from("/tmp"))
-            .join("hazelnut")
             .join("hazelnutd.log");
 
         if let Ok(content) = std::fs::read_to_string(&log_path) {
