@@ -172,23 +172,93 @@ pub fn detect_package_manager() -> PackageManager {
 pub fn run_update(pm: &PackageManager) -> Result<(), String> {
     use std::process::Stdio;
 
-    let (cmd, args): (&str, Vec<String>) = match pm {
-        PackageManager::Cargo => ("cargo", vec!["install".to_string(), "hazelnut".to_string()]),
-        PackageManager::Homebrew { formula } => {
-            ("brew", vec!["upgrade".to_string(), formula.clone()])
+    match pm {
+        PackageManager::Cargo => {
+            match std::process::Command::new("cargo")
+                .args(["install", "hazelnut"])
+                .stdout(Stdio::null())
+                .stderr(Stdio::null())
+                .status()
+            {
+                Ok(status) if status.success() => Ok(()),
+                Ok(status) => Err(format!("Update failed with status: {}", status)),
+                Err(e) => Err(format!("Failed to run cargo: {}", e)),
+            }
         }
-    };
+        PackageManager::Homebrew { formula } => {
+            // First update the tap to get latest formula
+            let _ = std::process::Command::new("brew")
+                .args(["update"])
+                .stdout(Stdio::null())
+                .stderr(Stdio::null())
+                .status();
 
-    let args_ref: Vec<&str> = args.iter().map(|s| s.as_str()).collect();
+            // Then upgrade the formula
+            match std::process::Command::new("brew")
+                .args(["upgrade", formula])
+                .stdout(Stdio::null())
+                .stderr(Stdio::null())
+                .status()
+            {
+                Ok(status) if status.success() => Ok(()),
+                Ok(_) => {
+                    // upgrade returns non-zero if already up to date, try reinstall
+                    match std::process::Command::new("brew")
+                        .args(["reinstall", formula])
+                        .stdout(Stdio::null())
+                        .stderr(Stdio::null())
+                        .status()
+                    {
+                        Ok(status) if status.success() => Ok(()),
+                        Ok(status) => Err(format!("Update failed with status: {}", status)),
+                        Err(e) => Err(format!("Failed to run brew: {}", e)),
+                    }
+                }
+                Err(e) => Err(format!("Failed to run brew: {}", e)),
+            }
+        }
+    }
+}
 
-    match std::process::Command::new(cmd)
-        .args(&args_ref)
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .status()
-    {
-        Ok(status) if status.success() => Ok(()),
-        Ok(status) => Err(format!("Update failed with status: {}", status)),
-        Err(e) => Err(format!("Failed to run {}: {}", cmd, e)),
+/// Check for updates using crates.io API (no rate limits).
+pub fn check_for_updates_crates_io() -> VersionCheck {
+    check_for_updates_crates_io_timeout(std::time::Duration::from_secs(5))
+}
+
+/// Check for updates using crates.io API with custom timeout.
+pub fn check_for_updates_crates_io_timeout(timeout: std::time::Duration) -> VersionCheck {
+    let url = "https://crates.io/api/v1/crates/hazelnut";
+
+    let agent = ureq::AgentBuilder::new().timeout(timeout).build();
+
+    let result = agent
+        .get(url)
+        .set("User-Agent", &format!("hazelnut/{}", VERSION))
+        .call();
+
+    match result {
+        Ok(response) => match response.into_json::<serde_json::Value>() {
+            Ok(json) => {
+                // crates.io returns: {"crate": {"max_version": "1.2.3", ...}}
+                if let Some(latest_str) = json
+                    .get("crate")
+                    .and_then(|c| c.get("max_version"))
+                    .and_then(|v| v.as_str())
+                {
+                    let latest = latest_str.to_string();
+                    let current = VERSION.to_string();
+
+                    if version_is_newer(&latest, &current) {
+                        VersionCheck::UpdateAvailable { latest, current }
+                    } else {
+                        VersionCheck::UpToDate
+                    }
+                } else {
+                    VersionCheck::CheckFailed("Could not parse crates.io response".to_string())
+                }
+            }
+            Err(e) => VersionCheck::CheckFailed(format!("Failed to parse response: {}", e)),
+        },
+        Err(e) => VersionCheck::CheckFailed(format!("Request failed: {}", e)),
     }
 }
