@@ -2,7 +2,7 @@
 
 ## Overview
 
-**Hazelnut** 🧹 is a terminal-based automated file organizer inspired by [Hazel](https://www.noodlesoft.com/). It watches directories and automatically organizes files based on user-defined rules.
+**Hazelnut** 🌰 is a terminal-based automated file organizer inspired by [Hazel](https://www.noodlesoft.com/). It watches directories and automatically organizes files based on user-defined rules.
 
 ## Architecture
 
@@ -12,11 +12,12 @@ hazelnut/
 │   ├── main.rs          # TUI application entry point
 │   ├── daemon.rs        # Background daemon entry point (hazelnutd)
 │   ├── lib.rs           # Shared library code
-│   ├── theme.rs         # 8 beautiful color themes
+│   ├── theme.rs         # Theme wrapper using ratatui-themes (15 themes)
+│   ├── update.rs        # Update checking & self-update (crates.io API)
 │   ├── app/             # TUI application logic
-│   │   ├── mod.rs       # App initialization
-│   │   ├── state.rs     # Application state
-│   │   ├── ui.rs        # UI rendering (logo, tabs, views)
+│   │   ├── mod.rs       # App initialization, background thread for updates
+│   │   ├── state.rs     # Application state, daemon status detection
+│   │   ├── ui.rs        # UI rendering (logo, tabs, views, popups)
 │   │   └── events.rs    # Key event handling
 │   ├── rules/           # Rule engine
 │   │   ├── mod.rs       # Rule struct
@@ -43,16 +44,19 @@ hazelnut/
 
 ### TUI (`hazelnut`)
 - **Dashboard**: Logo, stats, quick actions
-- **Rules view**: List, toggle enable/disable
+- **Rules view**: List, toggle enable/disable, create/edit/delete
 - **Watches view**: List watched folders
 - **Log view**: Activity history with timestamps
-- **8 themes**: Catppuccin, Dracula, Nord, Gruvbox, Tokyo Night, Monokai, Ocean, Sunset
+- **15 themes**: Powered by ratatui-themes (shared with Feedo)
 - **Keybindings**: vim-style navigation (j/k), Tab to switch views, ? for help
+- **Auto-update**: Background update check, one-key update via TUI or `hazelnut update` CLI
+- **Daemon status**: Real-time daemon connection status in TUI
 
 ### Daemon (`hazelnutd`)
 - Background file watching
 - Rule execution on file changes
-- IPC communication with TUI (planned)
+- PID/log files in `~/.local/state/hazelnut/`
+- Signal handling (SIGHUP for reload, SIGTERM for stop)
 
 ### Rule Engine
 **Conditions:**
@@ -77,6 +81,7 @@ hazelnut/
 | Crate | Version | Purpose |
 |-------|---------|---------|
 | ratatui | 0.30 | TUI framework |
+| ratatui-themes | 0.1 | Shared themes (15 themes) |
 | crossterm | 0.29 | Terminal backend |
 | tokio | 1.49 | Async runtime |
 | notify | 9.0.0-rc.1 | Filesystem watcher |
@@ -86,7 +91,7 @@ hazelnut/
 | chrono | 0.4 | Date/time handling |
 | regex | 1.12 | Pattern matching |
 | glob | 0.3 | Glob patterns |
-| dirs | 6.0 | XDG directories |
+| dirs | 6.0 | Home directory |
 
 ## Development Commands
 
@@ -120,16 +125,20 @@ cargo run -- run --dir ~/Downloads
 
 # Apply rules (no dry-run)
 cargo run -- run --dir ~/Downloads --apply
+
+# Check for updates
+cargo run -- update
 ```
 
 ## Configuration
 
-Default config: `~/.config/hazelnut/config.toml`
+Default config: `~/.config/hazelnut/config.toml` (same path on all platforms)
 
 ```toml
 [general]
 log_level = "info"
 dry_run = false
+theme = "dracula"
 
 [[watch]]
 path = "~/Downloads"
@@ -147,18 +156,27 @@ type = "move"
 destination = "~/Documents/PDFs"
 ```
 
+## Cross-Platform Paths
+
+Hazelnut uses consistent paths on all platforms:
+- Config: `~/.config/hazelnut/config.toml`
+- State (PID, logs): `~/.local/state/hazelnut/`
+
+This avoids macOS-specific paths like `~/Library/Application Support/`.
+
 ## Current Status
 
 ✅ **Working:**
-- Full TUI with beautiful themes
+- Full TUI with 15 beautiful themes
 - Config loading and parsing
 - Rule engine with conditions and actions
 - File watcher infrastructure
-- CLI commands (list, check, run)
+- CLI commands (list, check, run, update)
+- Visual rule editor in TUI
+- Auto-update with crates.io API
+- Daemon status detection
 
 🚧 **In Progress:**
-- Rule editor in TUI
-- Daemon service management
 - IPC between TUI and daemon
 
 📋 **Planned:**
@@ -168,17 +186,19 @@ destination = "~/Documents/PDFs"
 - Rule templates
 - Import from Hazel
 
-## Theme Cycling
+## Themes
 
-Press `Ctrl+t` in the TUI to cycle through themes:
-1. Catppuccin Mocha (default) - Warm and cozy
-2. Dracula - Dark and vibrant
-3. Nord - Cool and calm
-4. Gruvbox Dark - Retro warm
-5. Tokyo Night - Modern dark
-6. Monokai Pro - Classic dark
-7. Ocean Deep - Cool blue depths
-8. Sunset Glow - Warm twilight
+Press `t` in the TUI to open theme picker (15 themes from ratatui-themes):
+- Catppuccin Mocha, Latte, Frappé, Macchiato
+- Dracula
+- Nord
+- Gruvbox Dark/Light
+- Tokyo Night
+- Monokai Pro
+- Solarized Dark/Light
+- One Dark
+- Everforest
+- Rosé Pine
 
 ## Keybindings
 
@@ -189,17 +209,28 @@ Press `Ctrl+t` in the TUI to cycle through themes:
 | j/k or ↑/↓ | Navigate |
 | g/G | First/last item |
 | Enter/Space | Toggle rule |
-| Ctrl+t | Cycle theme |
+| n | New rule |
+| e | Edit rule |
+| d | Delete rule |
+| D | Toggle daemon |
+| t | Theme picker |
+| s | Settings |
+| U | Update (if available) |
 | ? | Show help |
+| A | About |
 | q / Ctrl+c | Quit |
 
-## The website's URL
+## Website
 
 https://hazelnut.ricardodantas.me
 
+## Related Projects
+
+- **Feedo** — Terminal RSS reader (same author, shared themes)
+- **ratatui-themes** — Shared theme library
 
 ## Binary Locations
 
 After `cargo build --release`:
-- TUI: `target/release/hazelnut` (3.4 MB)
-- Daemon: `target/release/hazelnutd` (2.5 MB)
+- TUI: `target/release/hazelnut`
+- Daemon: `target/release/hazelnutd`

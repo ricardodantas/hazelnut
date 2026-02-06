@@ -14,6 +14,7 @@ Hazelnut is a Rust-based terminal application for automated file organization. W
 - **Documentation:** https://hazelnut.ricardodantas.me/docs
 - **Author:** Ricardo Dantas
 - **Inspired by:** Hazel (macOS app)
+- **Themes:** Powered by ratatui-themes (shared with Feedo)
 
 ## Installation
 
@@ -38,7 +39,7 @@ Pre-built binaries available at: https://github.com/ricardodantas/hazelnut/relea
 - **Beautiful TUI**: Manage rules and monitor activity with 15 color themes
 - **Background Daemon**: Runs quietly, processing files automatically
 - **Visual Rule Editor**: Create rules directly in the TUI (press 'n')
-- **Auto-Update**: Built-in update checker with one-key update
+- **Auto-Update**: Built-in update checker with one-key update or `hazelnut update` CLI
 
 ## Architecture
 
@@ -60,15 +61,23 @@ hazelnut status
 
 # Stop the daemon
 hazelnutd stop
+
+# Check for updates
+hazelnut update
 ```
 
 ## Configuration
 
-Config file: `~/.config/hazelnut/config.toml`
+Config file: `~/.config/hazelnut/config.toml` (same path on all platforms)
+
+State files (PID, logs): `~/.local/state/hazelnut/`
 
 ### Example Configuration
 
 ```toml
+[general]
+theme = "dracula"
+
 # Folders to watch
 [[watch]]
 path = "~/Downloads"
@@ -116,6 +125,15 @@ type = "trash"
 - `delete` - Permanently delete
 - `run` - Execute shell command
 
+## Themes
+
+15 themes available via ratatui-themes:
+- Catppuccin (Mocha, Latte, Frappé, Macchiato)
+- Dracula, Nord, Gruvbox Dark/Light
+- Tokyo Night, Monokai Pro
+- Solarized Dark/Light, One Dark
+- Everforest, Rosé Pine
+
 ## Keyboard Shortcuts (TUI)
 
 - `j`/`k`: Navigate
@@ -125,14 +143,21 @@ type = "trash"
 - `d`: Delete rule
 - `D`: Toggle daemon
 - `t`: Theme picker
+- `s`: Settings
+- `U`: Update (if available)
 - `L`: View logs
 - `?`: Help
+- `A`: About
 - `q`: Quit
+
+## Related Projects
+
+- **Feedo**: Terminal RSS reader by the same author
+- **ratatui-themes**: Shared theme library for both projects
 
 ## Links
 
 - Website: https://hazelnut.ricardodantas.me
 - GitHub: https://github.com/ricardodantas/hazelnut
 - Issues: https://github.com/ricardodantas/hazelnut/issues
-- Themes: https://hazelnut.ricardodantas.me/themes
-- Documentation: https://hazelnut.ricardodantas.me/docs
+- Crates.io: https://crates.io/crates/hazelnut
