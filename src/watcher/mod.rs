@@ -21,8 +21,8 @@ pub struct Watcher {
 }
 
 impl Watcher {
-    /// Create a new watcher with the given rule engine
-    pub fn new(engine: RuleEngine) -> Result<Self> {
+    /// Create a new watcher with the given rule engine and polling interval
+    pub fn new(engine: RuleEngine, polling_interval_secs: u64) -> Result<Self> {
         let (tx, rx) = mpsc::channel();
 
         let watcher = RecommendedWatcher::new(
@@ -31,7 +31,7 @@ impl Watcher {
                     error!("Failed to send watch event: {}", e);
                 }
             },
-            Config::default().with_poll_interval(Duration::from_secs(2)),
+            Config::default().with_poll_interval(Duration::from_secs(polling_interval_secs)),
         )?;
 
         Ok(Self {
