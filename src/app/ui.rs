@@ -794,7 +794,11 @@ fn render_theme_picker(frame: &mut Frame, state: &AppState) {
             let selected = i == state.theme_picker_index;
 
             // Create color preview squares
-            let preview = format!("  {} {} ", if selected { "▸" } else { " " }, theme_name.display_name());
+            let preview = format!(
+                "  {} {} ",
+                if selected { "▸" } else { " " },
+                theme_name.display_name()
+            );
 
             let style = if selected {
                 Style::default()

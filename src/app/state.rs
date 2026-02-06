@@ -212,7 +212,10 @@ impl AppState {
     /// Create a new application state from config with a specific config path
     pub fn with_config_path(config: Config, theme: Theme, config_path: Option<PathBuf>) -> Self {
         // Find current theme index
-        let theme_picker_index = Theme::all().iter().position(|t| *t == theme.inner()).unwrap_or(0);
+        let theme_picker_index = Theme::all()
+            .iter()
+            .position(|t| *t == theme.inner())
+            .unwrap_or(0);
 
         let mut state = Self {
             view: View::default(),
