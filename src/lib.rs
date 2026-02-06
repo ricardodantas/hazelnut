@@ -3,6 +3,8 @@
 //! A Hazel-like file organization tool with a TUI interface.
 
 pub mod app;
+#[cfg(unix)]
+pub mod autostart;
 pub mod config;
 pub mod ipc;
 pub mod rules;

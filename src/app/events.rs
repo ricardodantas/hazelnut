@@ -6,6 +6,8 @@ use super::state::{
     AppState, Mode, RuleEditorField, RuleEditorState, SettingsItem, View, WatchEditorField,
     WatchEditorState,
 };
+#[cfg(unix)]
+use crate::autostart;
 use crate::theme::Theme;
 
 /// Process pending update if flagged (call after UI redraw)
@@ -519,6 +521,16 @@ fn handle_settings_action(state: &mut AppState) {
             ));
             save_config(state);
         }
+        #[cfg(unix)]
+        SettingsItem::AutoStartOnBoot => match autostart::toggle() {
+            Ok(enabled) => {
+                let status = if enabled { "enabled" } else { "disabled" };
+                state.set_status(format!("Auto-start on boot: {}", status));
+            }
+            Err(e) => {
+                state.set_status(format!("Failed to toggle auto-start: {}", e));
+            }
+        },
         SettingsItem::StartupBehavior => {
             state.config.general.start_daemon_on_launch =
                 !state.config.general.start_daemon_on_launch;

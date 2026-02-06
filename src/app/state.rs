@@ -63,6 +63,8 @@ pub enum Mode {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SettingsItem {
     DaemonControl,
+    #[cfg(unix)]
+    AutoStartOnBoot,
     ThemeSelection,
     PollingInterval,
     LogRetention,
@@ -74,6 +76,8 @@ impl SettingsItem {
     pub fn all() -> &'static [SettingsItem] {
         &[
             SettingsItem::DaemonControl,
+            #[cfg(unix)]
+            SettingsItem::AutoStartOnBoot,
             SettingsItem::ThemeSelection,
             SettingsItem::PollingInterval,
             SettingsItem::LogRetention,
@@ -85,6 +89,8 @@ impl SettingsItem {
     pub fn label(&self) -> &'static str {
         match self {
             SettingsItem::DaemonControl => "Start/Stop Daemon",
+            #[cfg(unix)]
+            SettingsItem::AutoStartOnBoot => "Auto-start on Boot",
             SettingsItem::ThemeSelection => "Theme",
             SettingsItem::PollingInterval => "Polling Interval",
             SettingsItem::LogRetention => "Log Retention",
@@ -96,6 +102,8 @@ impl SettingsItem {
     pub fn icon(&self) -> &'static str {
         match self {
             SettingsItem::DaemonControl => "🔌",
+            #[cfg(unix)]
+            SettingsItem::AutoStartOnBoot => "🖥️",
             SettingsItem::ThemeSelection => "🎨",
             SettingsItem::PollingInterval => "⏱",
             SettingsItem::LogRetention => "📋",

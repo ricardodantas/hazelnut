@@ -11,6 +11,8 @@ use ratatui::{
 use super::state::{
     AppState, LogLevel, Mode, RuleEditorField, SettingsItem, View, WatchEditorField,
 };
+#[cfg(unix)]
+use crate::autostart;
 use crate::theme::Theme;
 
 /// ASCII art logo for Hazelnut
@@ -911,6 +913,14 @@ fn get_settings_value_display(state: &AppState, item: SettingsItem) -> String {
                 "● Running".to_string()
             } else {
                 "○ Stopped".to_string()
+            }
+        }
+        #[cfg(unix)]
+        SettingsItem::AutoStartOnBoot => {
+            if autostart::is_enabled() {
+                "✓ Enabled".to_string()
+            } else {
+                "✗ Disabled".to_string()
             }
         }
         SettingsItem::ThemeSelection => state.theme.name().to_string(),
