@@ -38,7 +38,6 @@ log_file = "~/.local/share/hazelnut/hazelnut.log"
 
 # Dry run mode - preview actions without executing
 # Useful for testing new rules
-dry_run = false
 
 # Debounce time in seconds
 # Wait this long after a file change before processing
@@ -96,7 +95,6 @@ The `[general]` section configures global behavior.
 |---------|------|---------|-------------|
 | `log_level` | string | `"info"` | Logging verbosity: `trace`, `debug`, `info`, `warn`, `error` |
 | `log_file` | string | none | Path to log file. If not set, logs to stdout |
-| `dry_run` | bool | `false` | Preview mode - show what would happen without doing it |
 | `debounce_seconds` | int | `2` | Wait time before processing after file change |
 | `theme` | string | `"dracula"` | TUI color theme |
 
@@ -726,13 +724,11 @@ hazelnut check --config /path/to/config.toml
 ### Test Rules (Dry Run)
 
 ```bash
-# Global dry run in config
-[general]
-dry_run = true
+# Test rules without making changes (dry run by default)
+hazelnut run
 
-# Or via command line
-hazelnut run           # Dry run by default
-hazelnut run --apply   # Actually apply actions
+# Actually apply the actions
+hazelnut run --apply
 ```
 
 ### Debug Logging

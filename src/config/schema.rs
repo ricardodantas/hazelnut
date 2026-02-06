@@ -31,10 +31,6 @@ pub struct GeneralConfig {
     #[serde(default)]
     pub log_file: Option<PathBuf>,
 
-    /// Enable dry-run mode by default (no actual file operations)
-    #[serde(default)]
-    pub dry_run: bool,
-
     /// Seconds to wait before processing a file (debounce)
     #[serde(default = "default_debounce")]
     pub debounce_seconds: u64,
@@ -65,7 +61,6 @@ impl Default for GeneralConfig {
         Self {
             log_level: default_log_level(),
             log_file: None,
-            dry_run: false,
             debounce_seconds: default_debounce(),
             polling_interval_secs: default_polling_interval(),
             log_retention: default_log_retention(),
@@ -129,7 +124,6 @@ mod tests {
         let toml = r#"
             [general]
             log_level = "debug"
-            dry_run = true
             debounce_seconds = 5
 
             [[watch]]
@@ -151,7 +145,6 @@ mod tests {
 
         let config: Config = toml::from_str(toml).unwrap();
         assert_eq!(config.general.log_level, "debug");
-        assert!(config.general.dry_run);
         assert_eq!(config.general.debounce_seconds, 5);
         assert_eq!(config.watches.len(), 1);
         assert!(config.watches[0].recursive);

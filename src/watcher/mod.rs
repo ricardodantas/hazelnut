@@ -18,11 +18,16 @@ pub struct Watcher {
     watcher: RecommendedWatcher,
     engine: RuleEngine,
     rx: mpsc::Receiver<Result<notify::Event, notify::Error>>,
+    event_handler: EventHandler,
 }
 
 impl Watcher {
-    /// Create a new watcher with the given rule engine and polling interval
-    pub fn new(engine: RuleEngine, polling_interval_secs: u64) -> Result<Self> {
+    /// Create a new watcher with the given rule engine, polling interval, and debounce duration
+    pub fn new(
+        engine: RuleEngine,
+        polling_interval_secs: u64,
+        debounce_seconds: u64,
+    ) -> Result<Self> {
         let (tx, rx) = mpsc::channel();
 
         let watcher = RecommendedWatcher::new(
@@ -38,6 +43,7 @@ impl Watcher {
             watcher,
             engine,
             rx,
+            event_handler: EventHandler::new(debounce_seconds),
         })
     }
 
@@ -76,8 +82,8 @@ impl Watcher {
         Ok(events)
     }
 
-    /// Process events and apply rules
-    pub fn process_events(&self) -> Result<usize> {
+    /// Process events and apply rules (with debouncing)
+    pub fn process_events(&mut self) -> Result<usize> {
         let mut processed = 0;
 
         for event in self.poll()? {
@@ -88,10 +94,13 @@ impl Watcher {
                 notify::EventKind::Create(_)
                 | notify::EventKind::Modify(_)
                 | notify::EventKind::Access(_) => {
-                    for path in &event.paths {
+                    // Use event handler to debounce
+                    let paths_to_process = self.event_handler.should_process(&event);
+
+                    for path in paths_to_process {
                         if path.is_file() && path.exists() {
                             info!("File event detected: {}", path.display());
-                            if self.engine.process(path)? {
+                            if self.engine.process(&path)? {
                                 processed += 1;
                             }
                         }
@@ -102,6 +111,9 @@ impl Watcher {
                 }
             }
         }
+
+        // Periodically clean up old entries
+        self.event_handler.cleanup();
 
         Ok(processed)
     }

@@ -350,7 +350,11 @@ mod unix_daemon {
         );
 
         let engine = hazelnut::RuleEngine::new(config.rules.clone());
-        let mut watcher = hazelnut::Watcher::new(engine, config.general.polling_interval_secs)?;
+        let mut watcher = hazelnut::Watcher::new(
+            engine,
+            config.general.polling_interval_secs,
+            config.general.debounce_seconds,
+        )?;
 
         for watch in &config.watches {
             let expanded_path = hazelnut::expand_path(&watch.path);
@@ -378,9 +382,13 @@ mod unix_daemon {
                     match hazelnut::Config::load(config_path_clone.as_deref()) {
                         Ok(new_config) => {
                             config = new_config;
-                            // Recreate watcher with new rules and polling interval
+                            // Recreate watcher with new rules, polling interval, and debounce
                             let engine = hazelnut::RuleEngine::new(config.rules.clone());
-                            match hazelnut::Watcher::new(engine, config.general.polling_interval_secs) {
+                            match hazelnut::Watcher::new(
+                                engine,
+                                config.general.polling_interval_secs,
+                                config.general.debounce_seconds,
+                            ) {
                                 Ok(mut new_watcher) => {
                                     for watch in &config.watches {
                                         let expanded_path = hazelnut::expand_path(&watch.path);

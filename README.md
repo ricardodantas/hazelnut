@@ -211,7 +211,6 @@ log_level = "info"
 log_file = "~/.local/share/hazelnut/hazelnut.log"
 
 # Preview actions without executing (great for testing)
-dry_run = false
 
 # Wait time (seconds) before processing a file after change detected
 debounce_seconds = 2

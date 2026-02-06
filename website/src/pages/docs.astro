@@ -297,7 +297,6 @@ destination = "/home/youruser/Documents/PDFs"</code></pre>
             <button class="copy-btn" data-copy={`[general]
 log_level = "info"
 log_file = "~/.local/share/hazelnut/hazelnut.log"
-dry_run = false
 debounce_seconds = 2
 
 # Watch folders
@@ -324,7 +323,6 @@ destination = "~/Documents/PDFs"`}>Copy</button>
           <pre><code>{`[general]
 log_level = "info"
 log_file = "~/.local/share/hazelnut/hazelnut.log"
-dry_run = false
 debounce_seconds = 2
 
 # Watch folders
@@ -377,16 +375,16 @@ destination = "~/Documents/PDFs"`}</code></pre>
                 <td>Path to log file</td>
               </tr>
               <tr>
-                <td><code>dry_run</code></td>
-                <td>bool</td>
-                <td><code>false</code></td>
-                <td>Preview actions without executing</td>
-              </tr>
-              <tr>
                 <td><code>debounce_seconds</code></td>
                 <td>int</td>
                 <td><code>2</code></td>
                 <td>Wait time before processing a file</td>
+              </tr>
+              <tr>
+                <td><code>polling_interval_secs</code></td>
+                <td>int</td>
+                <td><code>5</code></td>
+                <td>How often to check for file changes</td>
               </tr>
             </tbody>
           </table>
