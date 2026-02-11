@@ -8,6 +8,7 @@ Hazelnut can be installed on macOS, Linux, and Windows.
 |----------|--------|---------|
 | **macOS** | Homebrew | `brew install ricardodantas/tap/hazelnut` |
 | **Linux** | Homebrew | `brew install ricardodantas/tap/hazelnut` |
+| **Linux** | Arch Linux (pacman) | `pacman -S hazelnut` |
 | **Linux** | Cargo | `cargo install hazelnut` |
 | **Windows** | Cargo | `cargo install hazelnut` |
 | **Windows** | Binary | [Download from Releases](https://github.com/ricardodantas/hazelnut/releases) |
@@ -37,6 +38,12 @@ cargo install hazelnut
 > **Note**: This compiles from source and takes a few minutes.
 
 ## Linux
+
+### Arch Linux (pacman)
+
+```bash
+pacman -S hazelnut
+```
 
 ### Homebrew (Recommended)
 
