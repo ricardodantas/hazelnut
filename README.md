@@ -25,7 +25,7 @@
     <img src="https://img.shields.io/github/actions/workflow/status/ricardodantas/hazelnut/ci.yml?style=flat&labelColor=1e1e2e&color=a6e3a1&logo=github-actions&logoColor=white&label=CI" alt="CI">
   </a>
   <a href="https://github.com/ricardodantas/hazelnut/blob/main/LICENSE">
-    <img src="https://img.shields.io/badge/license-MIT-89b4fa?style=flat&labelColor=1e1e2e" alt="License">
+    <img src="https://img.shields.io/badge/license-GPL--3.0-89b4fa?style=flat&labelColor=1e1e2e" alt="License">
   </a>
   <a href="https://rust-lang.org">
     <img src="https://img.shields.io/badge/rust-1.93+-f9e2af?style=flat&labelColor=1e1e2e&logo=rust&logoColor=white" alt="Rust Version">
@@ -869,7 +869,7 @@ hazelnut/
 
 ## 📄 License
 
-This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
+This project is licensed under the **GPL-3.0-or-later** license — see the [LICENSE](LICENSE) file for details.
 
 ---
 
