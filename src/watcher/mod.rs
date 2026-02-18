@@ -105,6 +105,13 @@ impl Watcher {
 
                     for path in paths_to_process {
                         if path.is_file() && path.exists() {
+                            // Skip hidden/dot files (e.g. .DS_Store, .localized)
+                            if let Some(name) = path.file_name().and_then(|n| n.to_str())
+                                && name.starts_with('.')
+                            {
+                                debug!("Skipping hidden file: {}", path.display());
+                                continue;
+                            }
                             info!("File event detected: {}", path.display());
                             match self.engine.process(&path) {
                                 Ok(true) => processed += 1,
@@ -189,6 +196,12 @@ impl Watcher {
         for entry in entries {
             let file_path = entry.path();
             if file_path.is_file() {
+                // Skip hidden/dot files (e.g. .DS_Store, .localized)
+                if let Some(name) = file_path.file_name().and_then(|n| n.to_str())
+                    && name.starts_with('.')
+                {
+                    continue;
+                }
                 scanned += 1;
                 match self.engine.process(&file_path) {
                     Ok(true) => {
