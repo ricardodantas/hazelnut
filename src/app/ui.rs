@@ -19,10 +19,10 @@ use crate::theme::Theme;
 const LOGO: &str = r#"
 ██╗  ██╗ █████╗ ███████╗███████╗██╗     ███╗   ██╗██╗   ██╗████████╗
 ██║  ██║██╔══██╗╚══███╔╝██╔════╝██║     ████╗  ██║██║   ██║╚══██╔══╝
-███████║███████║  ███╔╝ █████╗  ██║     ██╔██╗ ██║██║   ██║   ██║
-██╔══██║██╔══██║ ███╔╝  ██╔══╝  ██║     ██║╚██╗██║██║   ██║   ██║
-██║  ██║██║  ██║███████╗███████╗███████╗██║ ╚████║╚██████╔╝   ██║
-╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚══════╝╚══════╝╚═╝  ╚═══╝ ╚═════╝    ╚═╝
+███████║███████║  ███╔╝ █████╗  ██║     ██╔██╗ ██║██║   ██║   ██║   
+██╔══██║██╔══██║ ███╔╝  ██╔══╝  ██║     ██║╚██╗██║██║   ██║   ██║   
+██║  ██║██║  ██║███████╗███████╗███████╗██║ ╚████║╚██████╔╝   ██║   
+╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚══════╝╚══════╝╚═╝  ╚═══╝ ╚═════╝    ╚═╝   
 "#;
 
 /// Hazelnut icon
@@ -232,8 +232,11 @@ fn render_dashboard(frame: &mut Frame, state: &AppState, area: Rect) {
     };
 
     // Logo
-    let logo_lines: Vec<Line> = LOGO
-        .lines()
+    // Logo — pad all lines to equal width so centering preserves alignment
+    let logo_raw: Vec<&str> = LOGO.lines().collect();
+    let max_width = logo_raw.iter().map(|l| l.chars().count()).max().unwrap_or(0);
+    let logo_lines: Vec<Line> = logo_raw
+        .iter()
         .enumerate()
         .map(|(i, line)| {
             // Gradient effect
@@ -242,7 +245,8 @@ fn render_dashboard(frame: &mut Frame, state: &AppState, area: Rect) {
             } else {
                 colors.logo_style_secondary()
             };
-            Line::styled(line, style)
+            let padded = format!("{:<width$}", line, width = max_width);
+            Line::styled(padded, style)
         })
         .collect();
 
