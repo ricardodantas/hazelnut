@@ -83,8 +83,25 @@ pub async fn run(config_path: Option<PathBuf>) -> Result<()> {
         }
     });
 
+    // Start embedded watcher when daemon is not running
+    let mut embedded_watcher = if !state.daemon_running {
+        match create_embedded_watcher(&config) {
+            Ok(w) => {
+                state.daemon_running = true;
+                state.status_message = Some("Watching files (embedded)".to_string());
+                Some(w)
+            }
+            Err(e) => {
+                tracing::error!("Failed to start embedded watcher: {}", e);
+                None
+            }
+        }
+    } else {
+        None
+    };
+
     // Main loop
-    let result = run_app(&mut terminal, &mut state, rx);
+    let result = run_app(&mut terminal, &mut state, rx, &mut embedded_watcher);
 
     // Restore terminal
     disable_raw_mode()?;
@@ -98,6 +115,7 @@ fn run_app(
     terminal: &mut Terminal<CrosstermBackend<std::io::Stdout>>,
     state: &mut AppState,
     bg_rx: mpsc::Receiver<BackgroundMsg>,
+    embedded_watcher: &mut Option<crate::Watcher>,
 ) -> Result<()> {
     loop {
         // Check for background messages (non-blocking)
@@ -122,8 +140,22 @@ fn run_app(
         // Handle events
         if event::poll(Duration::from_millis(100))?
             && let Event::Key(key) = event::read()?
+            && key.kind == crossterm::event::KeyEventKind::Press
         {
             events::handle_key(state, key);
+        }
+
+        // Process embedded watcher events
+        if let Some(watcher) = embedded_watcher {
+            match watcher.process_events() {
+                Ok(count) if count > 0 => {
+                    tracing::info!("Processed {} files", count);
+                }
+                Err(e) => {
+                    tracing::error!("Watcher error: {}", e);
+                }
+                _ => {}
+            }
         }
 
         // Tick for animations
@@ -135,4 +167,24 @@ fn run_app(
     }
 
     Ok(())
+}
+
+/// Create an embedded file watcher for use when the daemon is not running.
+/// This enables file watching on all platforms (including Windows).
+fn create_embedded_watcher(config: &crate::Config) -> Result<crate::Watcher> {
+    let engine = crate::RuleEngine::new(config.rules.clone());
+    let mut watcher = crate::Watcher::new(
+        engine,
+        config.general.polling_interval_secs,
+        config.general.debounce_seconds,
+    )?;
+
+    for watch in &config.watches {
+        let expanded_path = crate::expand_path(&watch.path);
+        if let Err(e) = watcher.watch(&expanded_path, watch.recursive) {
+            tracing::error!("Failed to watch {}: {}", expanded_path.display(), e);
+        }
+    }
+
+    Ok(watcher)
 }
