@@ -814,20 +814,32 @@ fn handle_rule_editor_field_input(editor: &mut RuleEditorState, key: KeyEvent) {
 fn handle_text_input(input: &mut String, cursor: &mut usize, key: KeyEvent) {
     match key.code {
         KeyCode::Char(c) => {
-            let byte_pos = input.char_indices().nth(*cursor).map(|(i, _)| i).unwrap_or(input.len());
+            let byte_pos = input
+                .char_indices()
+                .nth(*cursor)
+                .map(|(i, _)| i)
+                .unwrap_or(input.len());
             input.insert(byte_pos, c);
             *cursor += 1;
         }
         KeyCode::Backspace => {
             if *cursor > 0 {
                 *cursor -= 1;
-                let byte_pos = input.char_indices().nth(*cursor).map(|(i, _)| i).unwrap_or(input.len());
+                let byte_pos = input
+                    .char_indices()
+                    .nth(*cursor)
+                    .map(|(i, _)| i)
+                    .unwrap_or(input.len());
                 input.remove(byte_pos);
             }
         }
         KeyCode::Delete => {
             if *cursor < input.chars().count() {
-                let byte_pos = input.char_indices().nth(*cursor).map(|(i, _)| i).unwrap_or(input.len());
+                let byte_pos = input
+                    .char_indices()
+                    .nth(*cursor)
+                    .map(|(i, _)| i)
+                    .unwrap_or(input.len());
                 input.remove(byte_pos);
             }
         }
@@ -854,20 +866,32 @@ fn handle_text_input(input: &mut String, cursor: &mut usize, key: KeyEvent) {
 fn handle_numeric_input(input: &mut String, cursor: &mut usize, key: KeyEvent) {
     match key.code {
         KeyCode::Char(c) if c.is_ascii_digit() => {
-            let byte_pos = input.char_indices().nth(*cursor).map(|(i, _)| i).unwrap_or(input.len());
+            let byte_pos = input
+                .char_indices()
+                .nth(*cursor)
+                .map(|(i, _)| i)
+                .unwrap_or(input.len());
             input.insert(byte_pos, c);
             *cursor += 1;
         }
         KeyCode::Backspace => {
             if *cursor > 0 {
                 *cursor -= 1;
-                let byte_pos = input.char_indices().nth(*cursor).map(|(i, _)| i).unwrap_or(input.len());
+                let byte_pos = input
+                    .char_indices()
+                    .nth(*cursor)
+                    .map(|(i, _)| i)
+                    .unwrap_or(input.len());
                 input.remove(byte_pos);
             }
         }
         KeyCode::Delete => {
             if *cursor < input.chars().count() {
-                let byte_pos = input.char_indices().nth(*cursor).map(|(i, _)| i).unwrap_or(input.len());
+                let byte_pos = input
+                    .char_indices()
+                    .nth(*cursor)
+                    .map(|(i, _)| i)
+                    .unwrap_or(input.len());
                 input.remove(byte_pos);
             }
         }

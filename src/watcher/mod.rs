@@ -111,8 +111,7 @@ impl Watcher {
 
             // Only process create and modify events
             match event.kind {
-                notify::EventKind::Create(_)
-                | notify::EventKind::Modify(_) => {
+                notify::EventKind::Create(_) | notify::EventKind::Modify(_) => {
                     // Use event handler to debounce
                     let paths_to_process = self.event_handler.should_process(&event);
 
@@ -124,18 +123,18 @@ impl Watcher {
                             Ok(false) => {} // No matching rule
                             Err(e) => {
                                 // Skip NotFound errors (file gone between event and processing)
-                                if e.downcast_ref::<std::io::Error>()
-                                    .is_some_and(|io_err| io_err.kind() == std::io::ErrorKind::NotFound)
-                                {
-                                    debug!("File disappeared before processing: {}", path.display());
+                                if e.downcast_ref::<std::io::Error>().is_some_and(|io_err| {
+                                    io_err.kind() == std::io::ErrorKind::NotFound
+                                }) {
+                                    debug!(
+                                        "File disappeared before processing: {}",
+                                        path.display()
+                                    );
                                     continue;
                                 }
                                 error!("Rule processing failed for {}: {}", path.display(), e);
                                 let rule_name = self.find_matching_rule_name(&path);
-                                crate::notifications::notify_rule_error(
-                                    &rule_name,
-                                    &e.to_string(),
-                                );
+                                crate::notifications::notify_rule_error(&rule_name, &e.to_string());
                             }
                         }
                     }

@@ -158,8 +158,15 @@ impl Action {
 
                 // Avoid overwriting existing files in trash
                 if trash_path.exists() {
-                    let stem = path.file_stem().unwrap_or_default().to_string_lossy().to_string();
-                    let ext = path.extension().map(|e| format!(".{}", e.to_string_lossy())).unwrap_or_default();
+                    let stem = path
+                        .file_stem()
+                        .unwrap_or_default()
+                        .to_string_lossy()
+                        .to_string();
+                    let ext = path
+                        .extension()
+                        .map(|e| format!(".{}", e.to_string_lossy()))
+                        .unwrap_or_default();
                     let mut counter = 1u32;
                     loop {
                         trash_path = trash_dir.join(format!("{}_{}{}", stem, counter, ext));
@@ -291,7 +298,8 @@ impl Action {
                         for entry in std::fs::read_dir(dir)? {
                             let entry = entry?;
                             let entry_path = entry.path();
-                            let relative = entry_path.strip_prefix(base)
+                            let relative = entry_path
+                                .strip_prefix(base)
                                 .unwrap_or(&entry_path)
                                 .to_string_lossy();
                             if entry_path.is_dir() {
@@ -305,9 +313,17 @@ impl Action {
                         }
                         Ok(())
                     }
-                    let dir_name = path.file_name().context("Dir has no name")?.to_string_lossy();
+                    let dir_name = path
+                        .file_name()
+                        .context("Dir has no name")?
+                        .to_string_lossy();
                     zip.add_directory(format!("{}/", dir_name), options)?;
-                    add_dir_to_zip(&mut zip, path, path.parent().unwrap_or(Path::new(".")), options)?;
+                    add_dir_to_zip(
+                        &mut zip,
+                        path,
+                        path.parent().unwrap_or(Path::new(".")),
+                        options,
+                    )?;
                 } else {
                     let file_name = path
                         .file_name()

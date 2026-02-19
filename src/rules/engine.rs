@@ -41,11 +41,7 @@ impl RuleEngine {
             }
         }
 
-        debug!(
-            "{} rules matched for: {}",
-            actions.len(),
-            path.display()
-        );
+        debug!("{} rules matched for: {}", actions.len(), path.display());
         Ok(actions.into_iter().next())
     }
 
