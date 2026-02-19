@@ -70,11 +70,28 @@ impl Config {
     }
 
     /// Get the default config file path
-    /// Uses the platform config directory (via dirs::config_dir), falling back to ~/.config
+    /// Returns the default config path.
+    /// Always uses `~/.config/hazelnut/config.toml` for cross-platform consistency,
+    /// but falls back to the platform config dir if `~/.config` doesn't exist.
+    /// On macOS this avoids breaking users who already have config at `~/.config/`.
     pub fn default_path() -> Option<PathBuf> {
-        let config_base =
-            dirs::config_dir().or_else(|| dirs::home_dir().map(|d| d.join(".config")))?;
-        Some(config_base.join("hazelnut").join("config.toml"))
+        // Prefer ~/.config/hazelnut/config.toml for cross-platform consistency
+        if let Some(home) = dirs::home_dir() {
+            let dotconfig = home.join(".config").join("hazelnut").join("config.toml");
+            if dotconfig.exists() {
+                return Some(dotconfig);
+            }
+            // If no existing config at ~/.config, also check platform dir (e.g. ~/Library/Application Support on macOS)
+            if let Some(platform_dir) = dirs::config_dir() {
+                let platform_path = platform_dir.join("hazelnut").join("config.toml");
+                if platform_path.exists() {
+                    return Some(platform_path);
+                }
+            }
+            // Default to ~/.config for new installs (consistent across platforms)
+            return Some(dotconfig);
+        }
+        dirs::config_dir().map(|d| d.join("hazelnut").join("config.toml"))
     }
 
     /// Get the default data directory
