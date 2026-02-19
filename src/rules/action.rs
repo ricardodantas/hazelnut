@@ -105,16 +105,29 @@ impl Action {
                 info!("Moving {} -> {}", path.display(), dest_path.display());
                 if std::fs::rename(path, &dest_path).is_err() {
                     // rename fails across filesystems; fall back to copy + remove
-                    std::fs::copy(path, &dest_path).with_context(|| {
-                        format!(
-                            "Failed to copy {} to {}",
-                            path.display(),
-                            dest_path.display()
-                        )
-                    })?;
-                    std::fs::remove_file(path).with_context(|| {
-                        format!("Failed to remove original file {}", path.display())
-                    })?;
+                    if path.is_dir() {
+                        copy_dir_recursive(path, &dest_path).with_context(|| {
+                            format!(
+                                "Failed to copy directory {} to {}",
+                                path.display(),
+                                dest_path.display()
+                            )
+                        })?;
+                        std::fs::remove_dir_all(path).with_context(|| {
+                            format!("Failed to remove original directory {}", path.display())
+                        })?;
+                    } else {
+                        std::fs::copy(path, &dest_path).with_context(|| {
+                            format!(
+                                "Failed to copy {} to {}",
+                                path.display(),
+                                dest_path.display()
+                            )
+                        })?;
+                        std::fs::remove_file(path).with_context(|| {
+                            format!("Failed to remove original file {}", path.display())
+                        })?;
+                    }
                 }
             }
 
@@ -429,6 +442,21 @@ impl Action {
 
         Ok(())
     }
+}
+
+/// Recursively copy a directory tree from `src` to `dst`.
+fn copy_dir_recursive(src: &Path, dst: &Path) -> Result<()> {
+    std::fs::create_dir_all(dst)?;
+    for entry in std::fs::read_dir(src)? {
+        let entry = entry?;
+        let dest_child = dst.join(entry.file_name());
+        if entry.file_type()?.is_dir() {
+            copy_dir_recursive(&entry.path(), &dest_child)?;
+        } else {
+            std::fs::copy(entry.path(), &dest_child)?;
+        }
+    }
+    Ok(())
 }
 
 /// Expand ~ and environment variables in a path

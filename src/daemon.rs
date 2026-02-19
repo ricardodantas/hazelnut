@@ -533,8 +533,15 @@ mod unix_daemon {
                                         break;
                                     }
                                     hazelnut::ipc::DaemonCommand::Reload => {
-                                        send_signal_safe(std::process::id() as i32, libc::SIGHUP);
-                                        hazelnut::ipc::DaemonResponse::Ok
+                                        match i32::try_from(std::process::id()) {
+                                            Ok(pid) => {
+                                                send_signal_safe(pid, libc::SIGHUP);
+                                                hazelnut::ipc::DaemonResponse::Ok
+                                            }
+                                            Err(_) => hazelnut::ipc::DaemonResponse::Error {
+                                                message: "PID too large for signal delivery".to_string(),
+                                            },
+                                        }
                                     }
                                     hazelnut::ipc::DaemonCommand::GetLog { limit } => {
                                         let entries = if let Ok(ring) = log_buf.lock() {

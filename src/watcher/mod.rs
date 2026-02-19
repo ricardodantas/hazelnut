@@ -289,7 +289,7 @@ fn scan_existing_background(
 
     for entry in entries {
         let file_path = entry.path();
-        if file_path.is_file() {
+        {
             scanned += 1;
             match engine.process_filtered(&file_path, allowed) {
                 Ok(true) => {
@@ -344,6 +344,7 @@ fn walkdir(path: &Path) -> Result<Box<dyn Iterator<Item = std::fs::DirEntry>>> {
             }
             if ft.is_dir() {
                 stack.push(entry.path());
+                entries.push(entry);
             } else {
                 entries.push(entry);
             }
