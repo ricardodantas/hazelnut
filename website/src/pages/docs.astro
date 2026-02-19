@@ -149,7 +149,7 @@ extension = "pdf"
 type = "move"
 destination = "/home/youruser/Documents/PDFs"</code></pre>
               </div>
-              <p class="note">💡 Use full paths — the <code>~</code> shortcut is not expanded.</p>
+              <p class="note">💡 Paths support <code>~</code>, <code>$VAR</code>, and <code>{'${VAR}'}</code> expansion.</p>
             </div>
           </div>
 
@@ -534,6 +534,7 @@ destination = "~/Documents/PDFs"
 create_destination = true  # Create folder if missing
 overwrite = false  # Don't overwrite existing files`}</code></pre>
         </div>
+        <p class="note">Works across filesystems — automatically falls back to copy + delete when needed. Supports both files and directories.</p>
 
         <h3>Copy</h3>
         <div class="code-block">
@@ -555,7 +556,7 @@ pattern = "{date}_{name}.{ext}"`}</code></pre>
         <ul>
           <li><code>{`{name}`}</code> - Filename without extension</li>
           <li><code>{`{filename}`}</code> - Full filename</li>
-          <li><code>{`{ext}`}</code> - Extension</li>
+          <li><code>{`{ext}`}</code> - Extension (empty string if none)</li>
           <li><code>{`{path}`}</code> - Full path</li>
           <li><code>{`{dir}`}</code> - Parent directory</li>
           <li><code>{`{date}`}</code> - Current date (YYYY-MM-DD)</li>
@@ -566,7 +567,7 @@ pattern = "{date}_{name}.{ext}"`}</code></pre>
         <h3>Trash / Delete</h3>
         <div class="code-block">
           <pre><code>{`[rule.action]
-type = "trash"  # Safe, recoverable
+type = "trash"  # Safe, recoverable (uses native OS trash)
 
 # Or permanently delete (⚠️ dangerous!)
 type = "delete"`}</code></pre>
@@ -579,6 +580,7 @@ type = "run"
 command = "convert"
 args = ["{path}", "-resize", "50%", "{dir}/{name}_small.{ext}"]`}</code></pre>
         </div>
+        <p class="note">Pattern variables are automatically shell-escaped for security. Commands have a 60-second timeout.</p>
 
         <h3>Archive</h3>
         <div class="code-block">
@@ -587,6 +589,7 @@ type = "archive"
 destination = "~/Archives"
 delete_original = false`}</code></pre>
         </div>
+        <p class="note">Supports both files and directories (directories are recursively archived).</p>
       </section>
 
       <section id="examples">
