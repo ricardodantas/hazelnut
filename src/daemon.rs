@@ -76,7 +76,7 @@ mod unix_daemon {
     }
 
     /// Read PID from file
-    fn read_pid() -> Option<u32> {
+    fn read_pid() -> Option<i32> {
         let pid_file = pid_file_path();
         if pid_file.exists() {
             fs::read_to_string(&pid_file)
@@ -103,18 +103,18 @@ mod unix_daemon {
     }
 
     /// Check if a process is running
-    fn is_process_running(pid: u32) -> bool {
+    fn is_process_running(pid: i32) -> bool {
         // Use kill -0 to check if process exists
-        unsafe { libc::kill(pid as i32, 0) == 0 }
+        unsafe { libc::kill(pid, 0) == 0 }
     }
 
     /// Send a signal to the daemon
-    fn send_signal(pid: u32, signal: i32) -> bool {
-        unsafe { libc::kill(pid as i32, signal) == 0 }
+    fn send_signal(pid: i32, signal: i32) -> bool {
+        unsafe { libc::kill(pid, signal) == 0 }
     }
 
     /// Get daemon status
-    fn get_status() -> (bool, Option<u32>) {
+    fn get_status() -> (bool, Option<i32>) {
         if let Some(pid) = read_pid() {
             if is_process_running(pid) {
                 return (true, Some(pid));
@@ -204,7 +204,9 @@ mod unix_daemon {
             use std::os::unix::process::CommandExt;
             unsafe {
                 cmd.pre_exec(|| {
-                    libc::setsid();
+                    if libc::setsid() == -1 {
+                        return Err(std::io::Error::last_os_error());
+                    }
                     Ok(())
                 });
             }

@@ -17,9 +17,11 @@ impl RuleEngine {
         Self { rules }
     }
 
-    /// Evaluate rules for a file and return the first matching action
+    /// Evaluate rules for a file and return matching actions (respecting stop_processing)
     pub fn evaluate(&self, path: &Path) -> Result<Option<Action>> {
         debug!("Evaluating rules for: {}", path.display());
+
+        let mut actions = Vec::new();
 
         for rule in &self.rules {
             if !rule.enabled {
@@ -29,14 +31,45 @@ impl RuleEngine {
 
             if rule.condition.matches(path)? {
                 info!("Rule '{}' matched: {}", rule.name, path.display());
-                return Ok(Some(rule.action.clone()));
+                actions.push(rule.action.clone());
+                if rule.stop_processing {
+                    debug!("stop_processing set on rule '{}', stopping", rule.name);
+                    break;
+                }
             } else {
                 debug!("Rule '{}' did not match: {}", rule.name, path.display());
             }
         }
 
-        debug!("No rules matched for: {}", path.display());
-        Ok(None)
+        debug!(
+            "{} rules matched for: {}",
+            actions.len(),
+            path.display()
+        );
+        Ok(actions.into_iter().next())
+    }
+
+    /// Evaluate all matching rules and return all actions (respecting stop_processing)
+    pub fn evaluate_all(&self, path: &Path) -> Result<Vec<Action>> {
+        debug!("Evaluating all rules for: {}", path.display());
+
+        let mut actions = Vec::new();
+
+        for rule in &self.rules {
+            if !rule.enabled {
+                continue;
+            }
+
+            if rule.condition.matches(path)? {
+                info!("Rule '{}' matched: {}", rule.name, path.display());
+                actions.push(rule.action.clone());
+                if rule.stop_processing {
+                    break;
+                }
+            }
+        }
+
+        Ok(actions)
     }
 
     /// Evaluate only rules whose names are in the allowed list (or all if None)
@@ -52,6 +85,7 @@ impl RuleEngine {
                     names.len(),
                     path.display()
                 );
+                let mut actions = Vec::new();
                 for rule in &self.rules {
                     if !rule.enabled {
                         continue;
@@ -62,10 +96,13 @@ impl RuleEngine {
                     }
                     if rule.condition.matches(path)? {
                         info!("Rule '{}' matched: {}", rule.name, path.display());
-                        return Ok(Some(rule.action.clone()));
+                        actions.push(rule.action.clone());
+                        if rule.stop_processing {
+                            break;
+                        }
                     }
                 }
-                Ok(None)
+                Ok(actions.into_iter().next())
             }
             _ => self.evaluate(path),
         }

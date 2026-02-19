@@ -94,13 +94,19 @@ impl Action {
                 }
 
                 info!("Moving {} -> {}", path.display(), dest_path.display());
-                std::fs::rename(path, &dest_path).with_context(|| {
-                    format!(
-                        "Failed to move {} to {}",
-                        path.display(),
-                        dest_path.display()
-                    )
-                })?;
+                if let Err(_) = std::fs::rename(path, &dest_path) {
+                    // rename fails across filesystems; fall back to copy + remove
+                    std::fs::copy(path, &dest_path).with_context(|| {
+                        format!(
+                            "Failed to copy {} to {}",
+                            path.display(),
+                            dest_path.display()
+                        )
+                    })?;
+                    std::fs::remove_file(path).with_context(|| {
+                        format!("Failed to remove original file {}", path.display())
+                    })?;
+                }
             }
 
             Action::Copy {
@@ -142,13 +148,32 @@ impl Action {
                 // For now, just move to a trash folder
                 let trash_dir = dirs::data_dir()
                     .map(|d| d.join("Trash").join("files"))
-                    .unwrap_or_else(|| PathBuf::from("~/.local/share/Trash/files"));
+                    .or_else(|| dirs::home_dir().map(|h| h.join(".local/share/Trash/files")))
+                    .unwrap_or_else(|| PathBuf::from("/tmp/trash"));
 
                 std::fs::create_dir_all(&trash_dir)?;
 
                 let filename = path.file_name().context("File has no name")?;
-                let trash_path = trash_dir.join(filename);
-                std::fs::rename(path, trash_path)?;
+                let mut trash_path = trash_dir.join(filename);
+
+                // Avoid overwriting existing files in trash
+                if trash_path.exists() {
+                    let stem = path.file_stem().unwrap_or_default().to_string_lossy().to_string();
+                    let ext = path.extension().map(|e| format!(".{}", e.to_string_lossy())).unwrap_or_default();
+                    let mut counter = 1u32;
+                    loop {
+                        trash_path = trash_dir.join(format!("{}_{}{}", stem, counter, ext));
+                        if !trash_path.exists() {
+                            break;
+                        }
+                        counter += 1;
+                    }
+                }
+
+                if let Err(_) = std::fs::rename(path, &trash_path) {
+                    std::fs::copy(path, &trash_path)?;
+                    std::fs::remove_file(path)?;
+                }
             }
 
             Action::Delete => {
@@ -182,9 +207,9 @@ impl Action {
                         "-c"
                     };
 
-                    // Expand {path} patterns in the command
-                    let expanded_command =
-                        expand_pattern(command, path).unwrap_or_else(|_| command.clone());
+                    // Expand {path} patterns in the command, shell-escaping values
+                    let expanded_command = expand_pattern_shell_escaped(command, path)
+                        .unwrap_or_else(|_| command.clone());
 
                     info!("Running (shell): {}", expanded_command);
 
@@ -255,13 +280,43 @@ impl Action {
                 let options = zip::write::SimpleFileOptions::default()
                     .compression_method(zip::CompressionMethod::Deflated);
 
-                let file_name = path
-                    .file_name()
-                    .context("File has no name")?
-                    .to_string_lossy();
-                zip.start_file(file_name.as_ref(), options)?;
-                let mut source = std::fs::File::open(path)?;
-                std::io::copy(&mut source, &mut zip)?;
+                if path.is_dir() {
+                    // Recursively add all files in the directory
+                    fn add_dir_to_zip(
+                        zip: &mut zip::ZipWriter<std::fs::File>,
+                        dir: &Path,
+                        base: &Path,
+                        options: zip::write::SimpleFileOptions,
+                    ) -> Result<()> {
+                        for entry in std::fs::read_dir(dir)? {
+                            let entry = entry?;
+                            let entry_path = entry.path();
+                            let relative = entry_path.strip_prefix(base)
+                                .unwrap_or(&entry_path)
+                                .to_string_lossy();
+                            if entry_path.is_dir() {
+                                zip.add_directory(format!("{}/", relative), options)?;
+                                add_dir_to_zip(zip, &entry_path, base, options)?;
+                            } else {
+                                zip.start_file(relative.as_ref(), options)?;
+                                let mut source = std::fs::File::open(&entry_path)?;
+                                std::io::copy(&mut source, zip)?;
+                            }
+                        }
+                        Ok(())
+                    }
+                    let dir_name = path.file_name().context("Dir has no name")?.to_string_lossy();
+                    zip.add_directory(format!("{}/", dir_name), options)?;
+                    add_dir_to_zip(&mut zip, path, path.parent().unwrap_or(Path::new(".")), options)?;
+                } else {
+                    let file_name = path
+                        .file_name()
+                        .context("File has no name")?
+                        .to_string_lossy();
+                    zip.start_file(file_name.as_ref(), options)?;
+                    let mut source = std::fs::File::open(path)?;
+                    std::io::copy(&mut source, &mut zip)?;
+                }
                 zip.finish()?;
 
                 info!("Created archive: {}", archive_path.display());
@@ -310,6 +365,52 @@ fn expand_pattern(pattern: &str, path: &Path) -> Result<String> {
     // {ext} - extension
     if let Some(ext) = path.extension() {
         result = result.replace("{ext}", &ext.to_string_lossy());
+    }
+
+    // {date} - current date
+    let now = chrono::Local::now();
+    result = result.replace("{date}", &now.format("%Y-%m-%d").to_string());
+    result = result.replace("{datetime}", &now.format("%Y-%m-%d_%H-%M-%S").to_string());
+
+    // {date:FORMAT} - custom date format
+    let date_regex = regex::Regex::new(r"\{date:([^}]+)\}")?;
+    result = date_regex
+        .replace_all(&result, |caps: &regex::Captures| {
+            let format = &caps[1];
+            now.format(format).to_string()
+        })
+        .to_string();
+
+    Ok(result)
+}
+
+/// Expand pattern variables with shell-escaped values (for use in shell commands)
+fn expand_pattern_shell_escaped(pattern: &str, path: &Path) -> Result<String> {
+    let mut result = pattern.to_string();
+
+    let escape = |s: &str| shell_escape::escape(s.into()).to_string();
+
+    // {path} - full path
+    result = result.replace("{path}", &escape(&path.to_string_lossy()));
+
+    // {dir} - parent directory
+    if let Some(parent) = path.parent() {
+        result = result.replace("{dir}", &escape(&parent.to_string_lossy()));
+    }
+
+    // {name} - filename without extension
+    if let Some(stem) = path.file_stem() {
+        result = result.replace("{name}", &escape(&stem.to_string_lossy()));
+    }
+
+    // {filename} - full filename with extension
+    if let Some(filename) = path.file_name() {
+        result = result.replace("{filename}", &escape(&filename.to_string_lossy()));
+    }
+
+    // {ext} - extension
+    if let Some(ext) = path.extension() {
+        result = result.replace("{ext}", &escape(&ext.to_string_lossy()));
     }
 
     // {date} - current date

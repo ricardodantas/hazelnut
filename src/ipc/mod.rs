@@ -12,7 +12,17 @@ pub fn socket_path() -> PathBuf {
     dirs::runtime_dir()
         .or_else(dirs::data_dir)
         .map(|d| d.join("hazelnut.sock"))
-        .unwrap_or_else(|| PathBuf::from("/tmp/hazelnut.sock"))
+        .unwrap_or_else(|| {
+            #[cfg(unix)]
+            {
+                let uid = unsafe { libc::getuid() };
+                PathBuf::from(format!("/tmp/hazelnut-{}.sock", uid))
+            }
+            #[cfg(not(unix))]
+            {
+                PathBuf::from("/tmp/hazelnut.sock")
+            }
+        })
 }
 
 /// Messages from TUI to daemon

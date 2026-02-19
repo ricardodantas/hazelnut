@@ -128,6 +128,7 @@ pub fn handle_key(state: &mut AppState, key: KeyEvent) {
                 .iter()
                 .position(|t| *t == state.theme.inner())
                 .unwrap_or(0);
+            state.original_theme = Some(state.theme.clone());
             state.mode = Mode::ThemePicker;
             return;
         }
@@ -161,6 +162,9 @@ fn handle_theme_picker_key(state: &mut AppState, key: KeyEvent) {
     match key.code {
         KeyCode::Esc => {
             // Cancel - restore original theme
+            if let Some(original) = state.original_theme.take() {
+                state.theme = original;
+            }
             state.mode = Mode::Normal;
         }
         KeyCode::Enter => {
@@ -491,6 +495,7 @@ fn handle_settings_action(state: &mut AppState) {
         }
         SettingsItem::ThemeSelection => {
             // Switch to theme picker
+            state.original_theme = Some(state.theme.clone());
             state.theme_picker_index = Theme::all()
                 .iter()
                 .position(|t| *t == state.theme.inner())
@@ -809,18 +814,21 @@ fn handle_rule_editor_field_input(editor: &mut RuleEditorState, key: KeyEvent) {
 fn handle_text_input(input: &mut String, cursor: &mut usize, key: KeyEvent) {
     match key.code {
         KeyCode::Char(c) => {
-            input.insert(*cursor, c);
+            let byte_pos = input.char_indices().nth(*cursor).map(|(i, _)| i).unwrap_or(input.len());
+            input.insert(byte_pos, c);
             *cursor += 1;
         }
         KeyCode::Backspace => {
             if *cursor > 0 {
                 *cursor -= 1;
-                input.remove(*cursor);
+                let byte_pos = input.char_indices().nth(*cursor).map(|(i, _)| i).unwrap_or(input.len());
+                input.remove(byte_pos);
             }
         }
         KeyCode::Delete => {
-            if *cursor < input.len() {
-                input.remove(*cursor);
+            if *cursor < input.chars().count() {
+                let byte_pos = input.char_indices().nth(*cursor).map(|(i, _)| i).unwrap_or(input.len());
+                input.remove(byte_pos);
             }
         }
         KeyCode::Left => {
@@ -829,7 +837,7 @@ fn handle_text_input(input: &mut String, cursor: &mut usize, key: KeyEvent) {
             }
         }
         KeyCode::Right => {
-            if *cursor < input.len() {
+            if *cursor < input.chars().count() {
                 *cursor += 1;
             }
         }
@@ -837,7 +845,7 @@ fn handle_text_input(input: &mut String, cursor: &mut usize, key: KeyEvent) {
             *cursor = 0;
         }
         KeyCode::End => {
-            *cursor = input.len();
+            *cursor = input.chars().count();
         }
         _ => {}
     }
@@ -846,18 +854,21 @@ fn handle_text_input(input: &mut String, cursor: &mut usize, key: KeyEvent) {
 fn handle_numeric_input(input: &mut String, cursor: &mut usize, key: KeyEvent) {
     match key.code {
         KeyCode::Char(c) if c.is_ascii_digit() => {
-            input.insert(*cursor, c);
+            let byte_pos = input.char_indices().nth(*cursor).map(|(i, _)| i).unwrap_or(input.len());
+            input.insert(byte_pos, c);
             *cursor += 1;
         }
         KeyCode::Backspace => {
             if *cursor > 0 {
                 *cursor -= 1;
-                input.remove(*cursor);
+                let byte_pos = input.char_indices().nth(*cursor).map(|(i, _)| i).unwrap_or(input.len());
+                input.remove(byte_pos);
             }
         }
         KeyCode::Delete => {
-            if *cursor < input.len() {
-                input.remove(*cursor);
+            if *cursor < input.chars().count() {
+                let byte_pos = input.char_indices().nth(*cursor).map(|(i, _)| i).unwrap_or(input.len());
+                input.remove(byte_pos);
             }
         }
         KeyCode::Left => {
@@ -866,7 +877,7 @@ fn handle_numeric_input(input: &mut String, cursor: &mut usize, key: KeyEvent) {
             }
         }
         KeyCode::Right => {
-            if *cursor < input.len() {
+            if *cursor < input.chars().count() {
                 *cursor += 1;
             }
         }
@@ -874,7 +885,7 @@ fn handle_numeric_input(input: &mut String, cursor: &mut usize, key: KeyEvent) {
             *cursor = 0;
         }
         KeyCode::End => {
-            *cursor = input.len();
+            *cursor = input.chars().count();
         }
         _ => {}
     }

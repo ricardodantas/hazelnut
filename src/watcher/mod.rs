@@ -112,40 +112,30 @@ impl Watcher {
             // Only process create and modify events
             match event.kind {
                 notify::EventKind::Create(_)
-                | notify::EventKind::Modify(_)
-                | notify::EventKind::Access(_) => {
+                | notify::EventKind::Modify(_) => {
                     // Use event handler to debounce
                     let paths_to_process = self.event_handler.should_process(&event);
 
                     for path in paths_to_process {
-                        if path.is_file() && path.exists() {
-                            // Skip hidden/dot files (e.g. .DS_Store, .localized)
-                            if let Some(name) = path.file_name().and_then(|n| n.to_str())
-                                && name.starts_with('.')
-                            {
-                                debug!("Skipping hidden file: {}", path.display());
-                                continue;
-                            }
-                            info!("File event detected: {}", path.display());
-                            let allowed = self.allowed_rules_for(&path);
-                            match self.engine.process_filtered(&path, allowed) {
-                                Ok(true) => processed += 1,
-                                Ok(false) => {} // No matching rule
-                                Err(e) => {
-                                    error!("Rule processing failed for {}: {}", path.display(), e);
-                                    // Find which rule matched (if any) for the notification
-                                    let rule_name = self
-                                        .engine
-                                        .evaluate_filtered(&path, allowed)
-                                        .ok()
-                                        .flatten()
-                                        .map(|_| self.find_matching_rule_name(&path))
-                                        .unwrap_or_else(|| "unknown".to_string());
-                                    crate::notifications::notify_rule_error(
-                                        &rule_name,
-                                        &e.to_string(),
-                                    );
+                        info!("File event detected: {}", path.display());
+                        let allowed = self.allowed_rules_for(&path);
+                        match self.engine.process_filtered(&path, allowed) {
+                            Ok(true) => processed += 1,
+                            Ok(false) => {} // No matching rule
+                            Err(e) => {
+                                // Skip NotFound errors (file gone between event and processing)
+                                if e.downcast_ref::<std::io::Error>()
+                                    .is_some_and(|io_err| io_err.kind() == std::io::ErrorKind::NotFound)
+                                {
+                                    debug!("File disappeared before processing: {}", path.display());
+                                    continue;
                                 }
+                                error!("Rule processing failed for {}: {}", path.display(), e);
+                                let rule_name = self.find_matching_rule_name(&path);
+                                crate::notifications::notify_rule_error(
+                                    &rule_name,
+                                    &e.to_string(),
+                                );
                             }
                         }
                     }
@@ -242,12 +232,6 @@ impl Watcher {
         for entry in entries {
             let file_path = entry.path();
             if file_path.is_file() {
-                // Skip hidden/dot files (e.g. .DS_Store, .localized)
-                if let Some(name) = file_path.file_name().and_then(|n| n.to_str())
-                    && name.starts_with('.')
-                {
-                    continue;
-                }
                 scanned += 1;
                 match self.engine.process_filtered(&file_path, allowed) {
                     Ok(true) => {
@@ -286,6 +270,10 @@ fn walk_recursive(path: &Path, result: &mut Vec<std::fs::DirEntry>) -> Result<()
     for entry in std::fs::read_dir(path)? {
         let entry = entry?;
         let ft = entry.file_type()?;
+        if ft.is_symlink() {
+            // Skip symlinks to avoid potential loops
+            continue;
+        }
         if ft.is_dir() {
             walk_recursive(&entry.path(), result)?;
         } else {

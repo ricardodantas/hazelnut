@@ -3,7 +3,14 @@
 use anyhow::Result;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::path::Path;
+
+// Simple thread-local caches for compiled patterns
+std::thread_local! {
+    static GLOB_CACHE: std::cell::RefCell<HashMap<String, glob::Pattern>> = std::cell::RefCell::new(HashMap::new());
+    static REGEX_CACHE: std::cell::RefCell<HashMap<String, Regex>> = std::cell::RefCell::new(HashMap::new());
+}
 
 /// Conditions for matching files
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -149,14 +156,32 @@ fn check_extension(path: &Path, ext: &str) -> bool {
 
 fn check_glob(path: &Path, pattern: &str) -> Result<bool> {
     let filename = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-    let glob_pattern = glob::Pattern::new(pattern)?;
-    Ok(glob_pattern.matches(filename))
+    GLOB_CACHE.with(|cache| {
+        let mut cache = cache.borrow_mut();
+        let glob_pattern = if let Some(p) = cache.get(pattern) {
+            p.clone()
+        } else {
+            let p = glob::Pattern::new(pattern)?;
+            cache.insert(pattern.to_string(), p.clone());
+            p
+        };
+        Ok(glob_pattern.matches(filename))
+    })
 }
 
 fn check_regex(path: &Path, pattern: &str) -> Result<bool> {
     let filename = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-    let regex = Regex::new(pattern)?;
-    Ok(regex.is_match(filename))
+    REGEX_CACHE.with(|cache| {
+        let mut cache = cache.borrow_mut();
+        let regex = if let Some(r) = cache.get(pattern) {
+            r.clone()
+        } else {
+            let r = Regex::new(pattern)?;
+            cache.insert(pattern.to_string(), r.clone());
+            r
+        };
+        Ok(regex.is_match(filename))
+    })
 }
 
 #[cfg(test)]

@@ -3,6 +3,7 @@
 use crate::config::Config;
 use crate::rules::{Action, Condition, Rule};
 use crate::theme::Theme;
+use std::collections::VecDeque;
 use std::path::PathBuf;
 
 /// Check if the daemon is currently running by checking the PID file
@@ -135,7 +136,7 @@ pub struct AppState {
     pub selected_watch: Option<usize>,
 
     /// Activity log entries
-    pub log_entries: Vec<LogEntry>,
+    pub log_entries: VecDeque<LogEntry>,
 
     /// Whether the app should quit
     pub should_quit: bool,
@@ -176,8 +177,14 @@ pub struct AppState {
     /// Update status message
     pub update_status: Option<String>,
 
+    /// Original theme saved when entering theme picker
+    pub original_theme: Option<Theme>,
+
     /// Flag to trigger update on next tick (allows UI to redraw first)
     pub pending_update: bool,
+
+    /// Cached file position for daemon log reading
+    pub log_file_position: u64,
 }
 
 /// Available views in the TUI
@@ -224,7 +231,7 @@ impl AppState {
             theme,
             selected_rule: None,
             selected_watch: None,
-            log_entries: Vec::new(),
+            log_entries: VecDeque::new(),
             should_quit: false,
             status_message: None,
             log_scroll: 0,
@@ -238,7 +245,9 @@ impl AppState {
             update_available: None,
             package_manager: crate::detect_package_manager(),
             update_status: None,
+            original_theme: None,
             pending_update: false,
+            log_file_position: 0,
         };
 
         // Add welcome log entries
@@ -281,7 +290,7 @@ impl AppState {
 
     /// Add a log entry
     pub fn log(&mut self, level: LogLevel, message: impl Into<String>) {
-        self.log_entries.push(LogEntry {
+        self.log_entries.push_back(LogEntry {
             timestamp: chrono::Local::now(),
             level,
             message: message.into(),
@@ -291,12 +300,14 @@ impl AppState {
 
         // Keep log bounded
         if self.log_entries.len() > 1000 {
-            self.log_entries.remove(0);
+            self.log_entries.pop_front();
         }
     }
 
-    /// Load daemon log entries from the log file
+    /// Load daemon log entries from the log file (incremental)
     pub fn load_daemon_logs(&mut self) {
+        use std::io::{Read, Seek, SeekFrom};
+
         // Use ~/.local/state/hazelnut/ on all platforms for consistency
         // This matches the path used by the daemon
         let log_path = dirs::home_dir()
@@ -304,29 +315,45 @@ impl AppState {
             .unwrap_or_else(|| PathBuf::from("/tmp"))
             .join("hazelnutd.log");
 
-        if let Ok(content) = std::fs::read_to_string(&log_path) {
-            // Clear existing entries and load from file
+        let Ok(mut file) = std::fs::File::open(&log_path) else {
+            return;
+        };
+
+        let file_len = file.metadata().map(|m| m.len()).unwrap_or(0);
+
+        if file_len < self.log_file_position {
+            // File was truncated/rotated — reset
             self.log_entries.clear();
+            self.log_file_position = 0;
+        }
 
-            // Use log_retention setting to limit entries (default 500)
-            let max_entries = self.config.general.log_retention;
+        if file_len == self.log_file_position {
+            return; // No new data
+        }
 
-            // Parse log lines (format: [timestamp] LEVEL message)
-            for line in content
-                .lines()
-                .rev()
-                .take(max_entries)
-                .collect::<Vec<_>>()
-                .into_iter()
-                .rev()
-            {
-                // Strip ANSI codes and parse
-                let clean_line = strip_ansi_codes(line);
+        if let Err(_) = file.seek(SeekFrom::Start(self.log_file_position)) {
+            return;
+        }
 
-                if let Some(entry) = parse_daemon_log_line(&clean_line) {
-                    self.log_entries.push(entry);
-                }
+        let mut new_content = String::new();
+        if let Err(_) = file.read_to_string(&mut new_content) {
+            return;
+        }
+
+        self.log_file_position = file_len;
+
+        let max_entries = self.config.general.log_retention;
+
+        for line in new_content.lines() {
+            let clean_line = strip_ansi_codes(line);
+            if let Some(entry) = parse_daemon_log_line(&clean_line) {
+                self.log_entries.push_back(entry);
             }
+        }
+
+        // Trim to max
+        while self.log_entries.len() > max_entries {
+            self.log_entries.pop_front();
         }
     }
 
