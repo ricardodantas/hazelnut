@@ -85,7 +85,7 @@ impl Watcher {
 
         // Initial scan — run in a background thread so TUI startup isn't blocked.
         let scan_path = path.to_path_buf();
-        let scan_rules: Vec<Rule> = self.engine.rules().to_vec();
+        let scan_rules: Arc<Vec<Rule>> = Arc::new(self.engine.rules().to_vec());
         let allowed_rules: Option<Vec<String>> = self
             .watch_rules
             .get(&canonical)
@@ -93,7 +93,7 @@ impl Watcher {
             .cloned();
         let counter = Arc::clone(&self.files_processed);
         std::thread::spawn(move || {
-            scan_existing_background(&scan_path, recursive, scan_rules, allowed_rules, counter);
+            scan_existing_background(&scan_path, recursive, &scan_rules, allowed_rules, counter);
         });
 
         Ok(())
@@ -205,14 +205,12 @@ impl Watcher {
 
     /// Find the allowed rules filter for a file path based on which watch directory it belongs to
     fn allowed_rules_for(&self, file_path: &Path) -> Option<&[String]> {
-        let canonical =
-            std::fs::canonicalize(file_path).unwrap_or_else(|_| file_path.to_path_buf());
-        // Find the watch directory that is a prefix of this file path using cached canonical paths
+        // Try matching with the raw event path first to avoid a syscall per event.
+        // Watch paths are already canonicalized at registration time.
         let mut best_match: Option<(&std::path::PathBuf, &Vec<String>)> = None;
         for (watch_path, rules) in &self.watch_rules {
-            // Use cached canonical path for the watch directory
             let watch_canonical = self.canonical_cache.get(watch_path).unwrap_or(watch_path);
-            if canonical.starts_with(watch_canonical)
+            if file_path.starts_with(watch_canonical)
                 && best_match.is_none_or(|(prev, _)| {
                     watch_canonical.as_os_str().len()
                         > self
@@ -226,6 +224,30 @@ impl Watcher {
                 best_match = Some((watch_path, rules));
             }
         }
+
+        // Fallback: canonicalize the event path only if raw comparison found nothing
+        // (handles symlinked event paths).
+        if best_match.is_none()
+            && let Ok(canonical) = std::fs::canonicalize(file_path)
+        {
+            for (watch_path, rules) in &self.watch_rules {
+                let watch_canonical = self.canonical_cache.get(watch_path).unwrap_or(watch_path);
+                if canonical.starts_with(watch_canonical)
+                    && best_match.is_none_or(|(prev, _)| {
+                        watch_canonical.as_os_str().len()
+                            > self
+                                .canonical_cache
+                                .get(prev)
+                                .unwrap_or(prev)
+                                .as_os_str()
+                                .len()
+                    })
+                {
+                    best_match = Some((watch_path, rules));
+                }
+            }
+        }
+
         match best_match {
             Some((_, rules)) if !rules.is_empty() => Some(rules.as_slice()),
             _ => None,
@@ -237,11 +259,11 @@ impl Watcher {
 fn scan_existing_background(
     path: &Path,
     recursive: bool,
-    rules: Vec<Rule>,
+    rules: &[Rule],
     allowed_rules: Option<Vec<String>>,
     counter: Arc<AtomicU64>,
 ) {
-    let engine = RuleEngine::new(rules);
+    let engine = RuleEngine::new(rules.to_vec());
     let allowed = allowed_rules.as_deref();
 
     let entries: Box<dyn Iterator<Item = std::fs::DirEntry>> = if recursive {

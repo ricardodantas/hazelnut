@@ -15,7 +15,7 @@ pub fn socket_path() -> PathBuf {
         .unwrap_or_else(|| {
             #[cfg(unix)]
             {
-                let uid = unsafe { libc::getuid() };
+                let uid = crate::current_uid();
                 PathBuf::from(format!("/tmp/hazelnut-{}.sock", uid))
             }
             #[cfg(not(unix))]

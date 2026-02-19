@@ -425,31 +425,39 @@ fn expand_path(path: &Path) -> PathBuf {
     crate::expand_path(path)
 }
 
-/// Expand pattern variables like {name}, {ext}, {date}
-fn expand_pattern(pattern: &str, path: &Path) -> Result<String> {
+/// Internal pattern expansion with optional shell escaping of path-derived values.
+fn expand_pattern_inner(pattern: &str, path: &Path, shell_escape: bool) -> Result<String> {
     let mut result = pattern.to_string();
 
+    let maybe_escape = |s: std::borrow::Cow<'_, str>| -> String {
+        if shell_escape {
+            shell_escape::escape(s).to_string()
+        } else {
+            s.to_string()
+        }
+    };
+
     // {path} - full path
-    result = result.replace("{path}", &path.to_string_lossy());
+    result = result.replace("{path}", &maybe_escape(path.to_string_lossy()));
 
     // {dir} - parent directory
     if let Some(parent) = path.parent() {
-        result = result.replace("{dir}", &parent.to_string_lossy());
+        result = result.replace("{dir}", &maybe_escape(parent.to_string_lossy()));
     }
 
     // {name} - filename without extension
     if let Some(stem) = path.file_stem() {
-        result = result.replace("{name}", &stem.to_string_lossy());
+        result = result.replace("{name}", &maybe_escape(stem.to_string_lossy()));
     }
 
     // {filename} - full filename with extension
     if let Some(filename) = path.file_name() {
-        result = result.replace("{filename}", &filename.to_string_lossy());
+        result = result.replace("{filename}", &maybe_escape(filename.to_string_lossy()));
     }
 
     // {ext} - extension
     if let Some(ext) = path.extension() {
-        result = result.replace("{ext}", &ext.to_string_lossy());
+        result = result.replace("{ext}", &maybe_escape(ext.to_string_lossy()));
     } else {
         result = result.replace("{ext}", "");
     }
@@ -470,51 +478,14 @@ fn expand_pattern(pattern: &str, path: &Path) -> Result<String> {
     Ok(result)
 }
 
+/// Expand pattern variables like {name}, {ext}, {date}
+fn expand_pattern(pattern: &str, path: &Path) -> Result<String> {
+    expand_pattern_inner(pattern, path, false)
+}
+
 /// Expand pattern variables with shell-escaped values (for use in shell commands)
 fn expand_pattern_shell_escaped(pattern: &str, path: &Path) -> Result<String> {
-    let mut result = pattern.to_string();
-
-    let escape = |s: &str| shell_escape::escape(s.into()).to_string();
-
-    // {path} - full path
-    result = result.replace("{path}", &escape(&path.to_string_lossy()));
-
-    // {dir} - parent directory
-    if let Some(parent) = path.parent() {
-        result = result.replace("{dir}", &escape(&parent.to_string_lossy()));
-    }
-
-    // {name} - filename without extension
-    if let Some(stem) = path.file_stem() {
-        result = result.replace("{name}", &escape(&stem.to_string_lossy()));
-    }
-
-    // {filename} - full filename with extension
-    if let Some(filename) = path.file_name() {
-        result = result.replace("{filename}", &escape(&filename.to_string_lossy()));
-    }
-
-    // {ext} - extension
-    if let Some(ext) = path.extension() {
-        result = result.replace("{ext}", &escape(&ext.to_string_lossy()));
-    } else {
-        result = result.replace("{ext}", "");
-    }
-
-    // {date} - current date
-    let now = chrono::Local::now();
-    result = result.replace("{date}", &now.format("%Y-%m-%d").to_string());
-    result = result.replace("{datetime}", &now.format("%Y-%m-%d_%H-%M-%S").to_string());
-
-    // {date:FORMAT} - custom date format
-    result = DATE_FORMAT_RE
-        .replace_all(&result, |caps: &regex::Captures| {
-            let format = &caps[1];
-            now.format(format).to_string()
-        })
-        .to_string();
-
-    Ok(result)
+    expand_pattern_inner(pattern, path, true)
 }
 
 #[cfg(test)]

@@ -63,6 +63,8 @@ impl Config {
             .with_context(|| format!("Failed to write config to {}", config_path.display()));
 
         let _ = lock_file.unlock();
+        // Clean up the lock file after successful write
+        let _ = std::fs::remove_file(&lock_path);
 
         result
     }

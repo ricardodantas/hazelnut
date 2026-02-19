@@ -17,6 +17,59 @@ pub use rules::{Action, Condition, Rule, RuleEngine};
 pub use theme::Theme;
 pub use watcher::Watcher;
 
+/// Safe wrapper around `libc::kill`. Returns `true` if the signal was delivered.
+#[cfg(unix)]
+pub fn process_is_running(pid: i32) -> bool {
+    // SAFETY: kill(2) with signal 0 merely probes whether the process exists.
+    unsafe { libc::kill(pid, 0) == 0 }
+}
+
+/// Safe wrapper around `libc::sysconf`.
+#[cfg(unix)]
+pub fn clock_ticks_per_sec() -> u64 {
+    // SAFETY: sysconf(_SC_CLK_TCK) has no memory-safety concerns.
+    unsafe { libc::sysconf(libc::_SC_CLK_TCK) as u64 }
+}
+
+/// Safe wrapper around `libc::getuid`.
+#[cfg(unix)]
+pub fn current_uid() -> u32 {
+    // SAFETY: getuid(2) is always safe to call.
+    unsafe { libc::getuid() }
+}
+
+/// Format a duration in seconds as a human-readable uptime string.
+pub fn format_uptime(running_secs: u64) -> String {
+    let hours = running_secs / 3600;
+    let mins = (running_secs % 3600) / 60;
+    let secs = running_secs % 60;
+    if hours > 0 {
+        format!("{}h {}m {}s", hours, mins, secs)
+    } else if mins > 0 {
+        format!("{}m {}s", mins, secs)
+    } else {
+        format!("{}s", secs)
+    }
+}
+
+/// Read process uptime on Linux by parsing /proc.
+/// Returns a formatted uptime string or `None` if unavailable.
+#[cfg(target_os = "linux")]
+pub fn read_process_uptime(pid: u32) -> Option<String> {
+    let stat = std::fs::read_to_string(format!("/proc/{}/stat", pid)).ok()?;
+    let parts: Vec<&str> = stat.split_whitespace().collect();
+    if parts.len() <= 21 {
+        return None;
+    }
+    let start_ticks: u64 = parts[21].parse().ok()?;
+    let uptime_str = std::fs::read_to_string("/proc/uptime").ok()?;
+    let uptime: f64 = uptime_str.split_whitespace().next()?.parse().ok()?;
+    let clock_ticks = clock_ticks_per_sec();
+    let start_secs = start_ticks / clock_ticks;
+    let running_secs = uptime as u64 - start_secs;
+    Some(format_uptime(running_secs))
+}
+
 /// Current version from Cargo.toml
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 

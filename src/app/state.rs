@@ -22,7 +22,7 @@ fn is_daemon_running() -> bool {
         && let Ok(pid) = pid_str.trim().parse::<i32>()
     {
         // Check if process is running using kill -0
-        return unsafe { libc::kill(pid, 0) == 0 };
+        return crate::process_is_running(pid);
     }
     false
 }

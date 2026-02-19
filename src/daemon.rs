@@ -294,39 +294,9 @@ mod unix_daemon {
             println!("   PID file: {}", pid_file_path().display());
             println!("   Log file: {}", log_file_path().display());
 
-            // Try to get process uptime on Linux
             #[cfg(target_os = "linux")]
-            {
-                if let Ok(stat) = fs::read_to_string(format!("/proc/{}/stat", pid)) {
-                    let parts: Vec<&str> = stat.split_whitespace().collect();
-                    if parts.len() > 21 {
-                        // Field 22 is starttime in clock ticks
-                        if let Ok(start_ticks) = parts[21].parse::<u64>() {
-                            // Get system uptime
-                            if let Ok(uptime_str) = fs::read_to_string("/proc/uptime")
-                                && let Some(uptime_secs) = uptime_str.split_whitespace().next()
-                                && let Ok(uptime) = uptime_secs.parse::<f64>()
-                            {
-                                let clock_ticks: u64 =
-                                    unsafe { libc::sysconf(libc::_SC_CLK_TCK) as u64 };
-                                let start_secs = start_ticks / clock_ticks;
-                                let running_secs = uptime as u64 - start_secs;
-
-                                let hours = running_secs / 3600;
-                                let mins = (running_secs % 3600) / 60;
-                                let secs = running_secs % 60;
-
-                                if hours > 0 {
-                                    println!("   Uptime: {}h {}m {}s", hours, mins, secs);
-                                } else if mins > 0 {
-                                    println!("   Uptime: {}m {}s", mins, secs);
-                                } else {
-                                    println!("   Uptime: {}s", secs);
-                                }
-                            }
-                        }
-                    }
-                }
+            if let Some(uptime) = hazelnut::read_process_uptime(pid as u32) {
+                println!("   Uptime: {}", uptime);
             }
         } else {
             println!("🌰 Hazelnut daemon is not running");
@@ -533,7 +503,13 @@ mod unix_daemon {
                         // and accepting new connections.
                         let reader = BufReader::new(stream);
                         let mut lines = reader.lines();
-                        if let Ok(Some(line)) = lines.next_line().await {
+                        // Apply a per-connection read timeout so a slow/malicious client
+                        // cannot block the daemon event loop indefinitely.
+                        let read_result = tokio::time::timeout(
+                            Duration::from_secs(5),
+                            lines.next_line(),
+                        ).await;
+                        if let Ok(Ok(Some(line))) = read_result {
                             let response = match serde_json::from_str::<hazelnut::ipc::DaemonCommand>(&line) {
                                 Ok(cmd) => match cmd {
                                     hazelnut::ipc::DaemonCommand::Status => {
