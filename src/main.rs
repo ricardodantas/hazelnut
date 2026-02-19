@@ -174,7 +174,11 @@ async fn main() -> Result<()> {
             let dirs: Vec<_> = if let Some(d) = dir {
                 vec![d]
             } else {
-                config.watches.iter().map(|w| w.path.clone()).collect()
+                config
+                    .watches
+                    .iter()
+                    .map(|w| hazelnut::expand_path(&w.path))
+                    .collect()
             };
 
             for dir in dirs {

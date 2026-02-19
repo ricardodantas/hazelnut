@@ -157,6 +157,11 @@ impl Watcher {
         self.files_processed
     }
 
+    /// Carry over files_processed count from a previous watcher (e.g. on config reload)
+    pub fn carry_over_files_processed(&mut self, old: &Watcher) {
+        self.files_processed = old.files_processed;
+    }
+
     /// Find the name of the first matching rule for a path
     fn find_matching_rule_name(&self, path: &std::path::Path) -> String {
         for rule in self.engine.rules() {
@@ -239,6 +244,16 @@ impl Watcher {
                     }
                     Ok(false) => {}
                     Err(e) => {
+                        // Skip NotFound errors (file gone between scan and processing)
+                        if e.downcast_ref::<std::io::Error>()
+                            .is_some_and(|io_err| io_err.kind() == std::io::ErrorKind::NotFound)
+                        {
+                            debug!(
+                                "File disappeared before processing: {}",
+                                file_path.display()
+                            );
+                            continue;
+                        }
                         error!("Rule processing failed for {}: {}", file_path.display(), e);
                         let rule_name = self.find_matching_rule_name(&file_path);
                         crate::notifications::notify_rule_error(&rule_name, &e.to_string());

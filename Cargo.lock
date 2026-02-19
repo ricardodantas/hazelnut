@@ -1016,6 +1016,7 @@ dependencies = [
  "serde",
  "serde_json",
  "shell-escape",
+ "shlex",
  "tempfile",
  "thiserror 2.0.18",
  "tokio",

@@ -171,6 +171,7 @@ fn handle_theme_picker_key(state: &mut AppState, key: KeyEvent) {
             // Apply selected theme
             let selected_theme = Theme::from(themes[state.theme_picker_index]);
             state.theme = selected_theme;
+            state.original_theme = None;
 
             // Save to config
             state.config.general.theme = Some(selected_theme.inner().slug().to_string());

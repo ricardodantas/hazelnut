@@ -611,6 +611,7 @@ impl WatchEditorState {
     ) -> Self {
         let path = watch.path.display().to_string();
         let cursor_path = path.len();
+        let rules_cursor = 0.min(available_rules.len().saturating_sub(1));
         Self {
             field: WatchEditorField::Path,
             editing_index: Some(index),
@@ -618,7 +619,7 @@ impl WatchEditorState {
             recursive: watch.recursive,
             rules_filter: watch.rules.clone(),
             available_rules,
-            rules_cursor: 0,
+            rules_cursor,
             cursor_path,
         }
     }
@@ -934,11 +935,12 @@ impl RuleEditorState {
             ActionTypeSelection::Delete => Action::Delete,
             ActionTypeSelection::Run => Action::Run {
                 command: self.action_command.clone(),
-                args: self
-                    .action_args
-                    .split_whitespace()
-                    .map(String::from)
-                    .collect(),
+                args: shlex::split(&self.action_args).unwrap_or_else(|| {
+                    self.action_args
+                        .split_whitespace()
+                        .map(String::from)
+                        .collect()
+                }),
             },
             ActionTypeSelection::Archive => Action::Archive {
                 destination: if self.action_destination.is_empty() {
@@ -963,22 +965,8 @@ impl RuleEditorState {
 
 /// Strip ANSI escape codes from a string
 fn strip_ansi_codes(s: &str) -> String {
-    let mut result = String::new();
-    let mut in_escape = false;
-
-    for c in s.chars() {
-        if c == '\x1b' {
-            in_escape = true;
-        } else if in_escape {
-            if c == 'm' {
-                in_escape = false;
-            }
-        } else {
-            result.push(c);
-        }
-    }
-
-    result
+    let re = regex::Regex::new(r"\x1b\[[0-9;]*[a-zA-Z]").unwrap();
+    re.replace_all(s, "").to_string()
 }
 
 /// Parse a daemon log line into a LogEntry
@@ -990,14 +978,20 @@ fn parse_daemon_log_line(line: &str) -> Option<LogEntry> {
     }
 
     // Find timestamp (ISO format)
-    let parts: Vec<&str> = line.splitn(3, ' ').collect();
-    if parts.len() < 3 {
-        return None;
-    }
-
-    let timestamp_str = parts[0].trim();
-    let level_str = parts[1].trim();
-    let message = parts[2..].join(" ");
+    let mut parts = line.splitn(3, char::is_whitespace);
+    let timestamp_str = match parts.next() {
+        Some(s) => s.trim(),
+        None => return None,
+    };
+    // Skip any extra whitespace to find level
+    let level_str = loop {
+        match parts.next() {
+            Some("") => continue,
+            Some(s) => break s.trim(),
+            None => return None,
+        }
+    };
+    let message = parts.next().unwrap_or("").to_string();
 
     // Parse timestamp
     let timestamp = chrono::DateTime::parse_from_rfc3339(timestamp_str)

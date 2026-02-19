@@ -169,6 +169,12 @@ impl Action {
                         .unwrap_or_default();
                     let mut counter = 1u32;
                     loop {
+                        if counter > 10000 {
+                            anyhow::bail!(
+                                "Too many duplicate files in trash for: {}",
+                                path.display()
+                            );
+                        }
                         trash_path = trash_dir.join(format!("{}_{}{}", stem, counter, ext));
                         if !trash_path.exists() {
                             break;
@@ -313,11 +319,6 @@ impl Action {
                         }
                         Ok(())
                     }
-                    let dir_name = path
-                        .file_name()
-                        .context("Dir has no name")?
-                        .to_string_lossy();
-                    zip.add_directory(format!("{}/", dir_name), options)?;
                     add_dir_to_zip(
                         &mut zip,
                         path,
@@ -381,6 +382,8 @@ fn expand_pattern(pattern: &str, path: &Path) -> Result<String> {
     // {ext} - extension
     if let Some(ext) = path.extension() {
         result = result.replace("{ext}", &ext.to_string_lossy());
+    } else {
+        result = result.replace("{ext}", "");
     }
 
     // {date} - current date
@@ -427,6 +430,8 @@ fn expand_pattern_shell_escaped(pattern: &str, path: &Path) -> Result<String> {
     // {ext} - extension
     if let Some(ext) = path.extension() {
         result = result.replace("{ext}", &escape(&ext.to_string_lossy()));
+    } else {
+        result = result.replace("{ext}", "");
     }
 
     // {date} - current date

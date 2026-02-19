@@ -73,7 +73,7 @@ impl RuleEngine {
         &self,
         path: &Path,
         allowed_rules: Option<&[String]>,
-    ) -> Result<Option<Action>> {
+    ) -> Result<Vec<Action>> {
         match allowed_rules {
             Some(names) if !names.is_empty() => {
                 debug!(
@@ -98,28 +98,34 @@ impl RuleEngine {
                         }
                     }
                 }
-                Ok(actions.into_iter().next())
+                Ok(actions)
             }
-            _ => self.evaluate(path),
+            _ => self.evaluate_all(path),
         }
     }
 
-    /// Evaluate filtered rules and execute the matching action
+    /// Evaluate filtered rules and execute all matching actions
     pub fn process_filtered(&self, path: &Path, allowed_rules: Option<&[String]>) -> Result<bool> {
-        if let Some(action) = self.evaluate_filtered(path, allowed_rules)? {
-            action.execute(path)?;
-            return Ok(true);
+        let actions = self.evaluate_filtered(path, allowed_rules)?;
+        if actions.is_empty() {
+            return Ok(false);
         }
-        Ok(false)
+        for action in actions {
+            action.execute(path)?;
+        }
+        Ok(true)
     }
 
-    /// Evaluate rules and execute the matching action
+    /// Evaluate rules and execute all matching actions
     pub fn process(&self, path: &Path) -> Result<bool> {
-        if let Some(action) = self.evaluate(path)? {
-            action.execute(path)?;
-            return Ok(true);
+        let actions = self.evaluate_all(path)?;
+        if actions.is_empty() {
+            return Ok(false);
         }
-        Ok(false)
+        for action in actions {
+            action.execute(path)?;
+        }
+        Ok(true)
     }
 
     /// Get all rules
@@ -232,25 +238,25 @@ mod tests {
         let result = engine
             .evaluate_filtered(Path::new("/tmp/test.pdf"), Some(&filter))
             .unwrap();
-        assert!(result.is_none());
+        assert!(result.is_empty());
 
         // But PNGs should match
         let result = engine
             .evaluate_filtered(Path::new("/tmp/test.png"), Some(&filter))
             .unwrap();
-        assert!(result.is_some());
+        assert!(!result.is_empty());
 
         // With None filter, all rules apply
         let result = engine
             .evaluate_filtered(Path::new("/tmp/test.pdf"), None)
             .unwrap();
-        assert!(result.is_some());
+        assert!(!result.is_empty());
 
         // With empty filter, all rules apply
         let empty: Vec<String> = vec![];
         let result = engine
             .evaluate_filtered(Path::new("/tmp/test.pdf"), Some(&empty))
             .unwrap();
-        assert!(result.is_some());
+        assert!(!result.is_empty());
     }
 }

@@ -87,7 +87,6 @@ pub async fn run(config_path: Option<PathBuf>) -> Result<()> {
     let mut embedded_watcher = if !state.daemon_running {
         match create_embedded_watcher(&config) {
             Ok(w) => {
-                state.daemon_running = true;
                 state.status_message = Some("Watching files (embedded)".to_string());
                 Some(w)
             }

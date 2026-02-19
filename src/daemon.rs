@@ -426,6 +426,7 @@ mod unix_daemon {
                                             );
                                         }
                                     }
+                                    new_watcher.carry_over_files_processed(&watcher);
                                     watcher = new_watcher;
                                     info!("Configuration reloaded: {} watches, {} rules",
                                         config.watches.len(), config.rules.len());

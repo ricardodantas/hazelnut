@@ -89,41 +89,46 @@ impl Condition {
         }
 
         // Check file size
-        if (self.size_greater_than.is_some() || self.size_less_than.is_some())
-            && let Ok(metadata) = path.metadata()
-        {
-            let size = metadata.len();
+        if self.size_greater_than.is_some() || self.size_less_than.is_some() {
+            match path.metadata() {
+                Ok(metadata) => {
+                    let size = metadata.len();
 
-            if let Some(min) = self.size_greater_than
-                && size <= min
-            {
-                return Ok(false);
-            }
+                    if let Some(min) = self.size_greater_than
+                        && size <= min
+                    {
+                        return Ok(false);
+                    }
 
-            if let Some(max) = self.size_less_than
-                && size >= max
-            {
-                return Ok(false);
+                    if let Some(max) = self.size_less_than
+                        && size >= max
+                    {
+                        return Ok(false);
+                    }
+                }
+                Err(_) => return Ok(false),
             }
         }
 
         // Check file age
-        if (self.age_days_greater_than.is_some() || self.age_days_less_than.is_some())
-            && let Ok(metadata) = path.metadata()
-            && let Ok(modified) = metadata.modified()
-        {
-            let age = modified.elapsed().map(|d| d.as_secs() / 86400).unwrap_or(0);
+        if self.age_days_greater_than.is_some() || self.age_days_less_than.is_some() {
+            match path.metadata().and_then(|m| m.modified()) {
+                Ok(modified) => {
+                    let age = modified.elapsed().map(|d| d.as_secs() / 86400).unwrap_or(0);
 
-            if let Some(min_days) = self.age_days_greater_than
-                && age <= min_days
-            {
-                return Ok(false);
-            }
+                    if let Some(min_days) = self.age_days_greater_than
+                        && age <= min_days
+                    {
+                        return Ok(false);
+                    }
 
-            if let Some(max_days) = self.age_days_less_than
-                && age >= max_days
-            {
-                return Ok(false);
+                    if let Some(max_days) = self.age_days_less_than
+                        && age >= max_days
+                    {
+                        return Ok(false);
+                    }
+                }
+                Err(_) => return Ok(false),
             }
         }
 
