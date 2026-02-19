@@ -186,14 +186,15 @@ async fn main() -> Result<()> {
                 let entries = std::fs::read_dir(&dir)?;
                 for entry in entries.flatten() {
                     let path = entry.path();
-                    if path.is_file()
-                        && let Some(action) = engine.evaluate(&path)?
-                    {
-                        if apply {
-                            println!("  Applying: {} -> {:?}", path.display(), action);
-                            action.execute(&path)?;
-                        } else {
-                            println!("  [dry-run] {} -> {:?}", path.display(), action);
+                    if path.is_file() {
+                        let actions = engine.evaluate_all(&path)?;
+                        for action in actions {
+                            if apply {
+                                println!("  Applying: {} -> {:?}", path.display(), action);
+                                action.execute(&path)?;
+                            } else {
+                                println!("  [dry-run] {} -> {:?}", path.display(), action);
+                            }
                         }
                     }
                 }

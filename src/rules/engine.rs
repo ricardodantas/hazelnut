@@ -17,11 +17,9 @@ impl RuleEngine {
         Self { rules }
     }
 
-    /// Evaluate rules for a file and return matching actions (respecting stop_processing)
-    pub fn evaluate(&self, path: &Path) -> Result<Option<Action>> {
-        debug!("Evaluating rules for: {}", path.display());
-
-        let mut actions = Vec::new();
+    /// Evaluate rules for a file and return the first matching action
+    pub fn evaluate_first(&self, path: &Path) -> Result<Option<Action>> {
+        debug!("Evaluating first matching rule for: {}", path.display());
 
         for rule in &self.rules {
             if !rule.enabled {
@@ -31,18 +29,12 @@ impl RuleEngine {
 
             if rule.condition.matches(path)? {
                 info!("Rule '{}' matched: {}", rule.name, path.display());
-                actions.push(rule.action.clone());
-                if rule.stop_processing {
-                    debug!("stop_processing set on rule '{}', stopping", rule.name);
-                    break;
-                }
-            } else {
-                debug!("Rule '{}' did not match: {}", rule.name, path.display());
+                return Ok(Some(rule.action.clone()));
             }
         }
 
-        debug!("{} rules matched for: {}", actions.len(), path.display());
-        Ok(actions.into_iter().next())
+        debug!("No rules matched for: {}", path.display());
+        Ok(None)
     }
 
     /// Evaluate all matching rules and return all actions (respecting stop_processing)
@@ -176,10 +168,10 @@ mod tests {
 
         let engine = RuleEngine::new(rules);
 
-        let result = engine.evaluate(Path::new("/tmp/test.pdf")).unwrap();
+        let result = engine.evaluate_first(Path::new("/tmp/test.pdf")).unwrap();
         assert!(result.is_some());
 
-        let result = engine.evaluate(Path::new("/tmp/test.txt")).unwrap();
+        let result = engine.evaluate_first(Path::new("/tmp/test.txt")).unwrap();
         assert!(result.is_none());
     }
 
@@ -198,7 +190,7 @@ mod tests {
 
         let engine = RuleEngine::new(rules);
 
-        let result = engine.evaluate(Path::new("/tmp/test.pdf")).unwrap();
+        let result = engine.evaluate_first(Path::new("/tmp/test.pdf")).unwrap();
         assert!(result.is_none());
     }
 

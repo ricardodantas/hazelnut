@@ -185,6 +185,9 @@ pub struct AppState {
 
     /// Cached file position for daemon log reading
     pub log_file_position: u64,
+
+    /// Flag: watcher needs restart (set when daemon is stopped from settings)
+    pub watcher_needs_restart: bool,
 }
 
 /// Available views in the TUI
@@ -248,6 +251,7 @@ impl AppState {
             original_theme: None,
             pending_update: false,
             log_file_position: 0,
+            watcher_needs_restart: false,
         };
 
         // Add welcome log entries
@@ -419,6 +423,7 @@ pub enum RuleEditorField {
     ActionDestination,
     ActionPattern,
     ActionCommand,
+    ActionArgs,
 }
 
 impl RuleEditorField {
@@ -439,14 +444,15 @@ impl RuleEditorField {
             Self::ActionType => Self::ActionDestination,
             Self::ActionDestination => Self::ActionPattern,
             Self::ActionPattern => Self::ActionCommand,
-            Self::ActionCommand => Self::Name,
+            Self::ActionCommand => Self::ActionArgs,
+            Self::ActionArgs => Self::Name,
         }
     }
 
     /// Get the previous field in tab order
     pub fn prev(self) -> Self {
         match self {
-            Self::Name => Self::ActionCommand,
+            Self::Name => Self::ActionArgs,
             Self::Enabled => Self::Name,
             Self::Extension => Self::Enabled,
             Self::NameGlob => Self::Extension,
@@ -461,6 +467,7 @@ impl RuleEditorField {
             Self::ActionDestination => Self::ActionType,
             Self::ActionPattern => Self::ActionDestination,
             Self::ActionCommand => Self::ActionPattern,
+            Self::ActionArgs => Self::ActionCommand,
         }
     }
 }
@@ -775,7 +782,7 @@ impl RuleEditorState {
                 String::new(),
                 String::new(),
                 command.clone(),
-                args.join(" "),
+                shlex::try_join(args.iter().map(|s| s.as_str())).unwrap_or_else(|_| args.join(" ")),
                 false,
                 false,
             ),
@@ -965,8 +972,9 @@ impl RuleEditorState {
 
 /// Strip ANSI escape codes from a string
 fn strip_ansi_codes(s: &str) -> String {
-    let re = regex::Regex::new(r"\x1b\[[0-9;]*[a-zA-Z]").unwrap();
-    re.replace_all(s, "").to_string()
+    static ANSI_RE: std::sync::LazyLock<regex::Regex> =
+        std::sync::LazyLock::new(|| regex::Regex::new(r"\x1b\[[0-9;]*[a-zA-Z]").unwrap());
+    ANSI_RE.replace_all(s, "").to_string()
 }
 
 /// Parse a daemon log line into a LogEntry

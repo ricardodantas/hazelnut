@@ -632,6 +632,7 @@ fn toggle_daemon(state: &mut AppState) {
         {
             Ok(status) if status.success() => {
                 state.daemon_running = false;
+                state.watcher_needs_restart = true;
                 state.set_status("Daemon stopped");
             }
             Ok(_) => {
@@ -809,6 +810,9 @@ fn handle_rule_editor_field_input(editor: &mut RuleEditorState, key: KeyEvent) {
             &mut editor.cursor_action_command,
             key,
         ),
+        RuleEditorField::ActionArgs => {
+            handle_text_input(&mut editor.action_args, &mut editor.cursor_action_args, key)
+        }
     }
 }
 

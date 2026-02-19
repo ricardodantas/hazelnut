@@ -144,6 +144,26 @@ fn run_app(
             events::handle_key(state, key);
         }
 
+        // Stop embedded watcher if daemon was started
+        if state.daemon_running && embedded_watcher.is_some() {
+            *embedded_watcher = None;
+        }
+
+        // Restart embedded watcher if daemon was stopped
+        if state.watcher_needs_restart {
+            state.watcher_needs_restart = false;
+            match create_embedded_watcher(&state.config) {
+                Ok(w) => {
+                    *embedded_watcher = Some(w);
+                    state.set_status("Embedded watcher started (daemon stopped)");
+                }
+                Err(e) => {
+                    tracing::error!("Failed to start embedded watcher: {}", e);
+                    state.set_status(format!("Failed to start watcher: {}", e));
+                }
+            }
+        }
+
         // Process embedded watcher events
         if let Some(watcher) = embedded_watcher {
             match watcher.process_events() {

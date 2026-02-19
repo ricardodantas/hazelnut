@@ -1235,6 +1235,21 @@ fn render_rule_editor(frame: &mut Frame, state: &AppState) {
                 field_style(RuleEditorField::ActionCommand),
             ),
         ]),
+        Line::from(vec![
+            Span::styled(
+                format!(" {} ", cursor(RuleEditorField::ActionArgs)),
+                field_style(RuleEditorField::ActionArgs),
+            ),
+            Span::styled("Args:        ", label_style(RuleEditorField::ActionArgs)),
+            Span::styled(
+                if editor.action_args.is_empty() {
+                    "(none)"
+                } else {
+                    &editor.action_args
+                },
+                field_style(RuleEditorField::ActionArgs),
+            ),
+        ]),
         Line::from(""),
         // Contextual help line
         Line::from(vec![
@@ -1272,7 +1287,7 @@ fn render_rule_editor(frame: &mut Frame, state: &AppState) {
     //  0: empty, 1: header, 2: Name, 3: Enabled, 4: empty, 5: header
     //  6: Extension, 7: NameGlob, 8: NameRegex, 9: SizeGreater, 10: SizeLess
     // 11: AgeGreater, 12: AgeLess, 13: IsDirectory, 14: IsHidden, 15: empty
-    // 16: header, 17: ActionType, 18: ActionDestination, 19: ActionPattern, 20: ActionCommand
+    // 16: header, 17: ActionType, 18: ActionDestination, 19: ActionPattern, 20: ActionCommand, 21: ActionArgs
     let (field_row, cursor_offset) = match editor.field {
         RuleEditorField::Name => (3, editor.cursor_name), // line 2 + 1
         RuleEditorField::Extension => (7, editor.cursor_extension), // line 6 + 1
@@ -1285,6 +1300,7 @@ fn render_rule_editor(frame: &mut Frame, state: &AppState) {
         RuleEditorField::ActionDestination => (19, editor.cursor_action_destination), // line 18 + 1
         RuleEditorField::ActionPattern => (20, editor.cursor_action_pattern), // line 19 + 1
         RuleEditorField::ActionCommand => (21, editor.cursor_action_command), // line 20 + 1
+        RuleEditorField::ActionArgs => (22, editor.cursor_action_args), // line 21 + 1
         // Non-text fields don't need cursor
         _ => (0, 0),
     };
@@ -1319,6 +1335,7 @@ fn field_help(field: RuleEditorField) -> &'static str {
         ActionDestination => "Target folder path, e.g. ~/Documents/PDFs",
         ActionPattern => "Rename pattern, e.g. '{name}_{date}.{ext}'",
         ActionCommand => "Command to run, e.g. 'convert' or '/usr/bin/script.sh'",
+        ActionArgs => "Arguments for the command, e.g. '-resize 50% {file}'",
     }
 }
 
