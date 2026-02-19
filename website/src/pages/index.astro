@@ -74,7 +74,10 @@ const baseUrl = import.meta.env.BASE_URL;
           <span class="demo-title">hazelnut</span>
         </div>
         <div class="demo-content">
-          <img src={`${baseUrl}screenshots/01-dashboard.png`} alt="Hazelnut TUI dashboard" loading="lazy" />
+          <video autoplay loop muted playsinline poster={`${baseUrl}screenshots/01-dashboard.png`}>
+            <source src={`${baseUrl}demos/hazelnut-demo.mp4`} type="video/mp4" />
+            <img src={`${baseUrl}screenshots/01-dashboard.png`} alt="Hazelnut TUI dashboard" loading="lazy" />
+          </video>
         </div>
       </div>
     </div>
@@ -511,7 +514,8 @@ destination = "~/Documents/PDFs"</code></pre>
     font-family: var(--font-mono);
   }
 
-  .demo-content img {
+  .demo-content img,
+  .demo-content video {
     width: 100%;
     display: block;
   }
@@ -780,7 +784,8 @@ destination = "~/Documents/PDFs"</code></pre>
       max-width: 100%;
     }
 
-    .demo-content img {
+    .demo-content img,
+    .demo-content video {
       max-width: 100%;
       height: auto;
     }
