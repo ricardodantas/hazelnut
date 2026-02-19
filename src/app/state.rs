@@ -9,14 +9,14 @@ use std::path::PathBuf;
 /// Check if the daemon is currently running by checking the PID file
 #[cfg(unix)]
 fn is_daemon_running() -> bool {
-    let pid_file = dirs::home_dir()
-        .map(|h| {
-            h.join(".local")
-                .join("state")
-                .join("hazelnut")
-                .join("hazelnutd.pid")
+    let pid_file = dirs::state_dir()
+        .unwrap_or_else(|| {
+            dirs::home_dir()
+                .map(|h| h.join(".local").join("state"))
+                .unwrap_or_else(|| PathBuf::from("/tmp"))
         })
-        .unwrap_or_else(|| PathBuf::from("/tmp/hazelnutd.pid"));
+        .join("hazelnut")
+        .join("hazelnutd.pid");
 
     if let Ok(pid_str) = std::fs::read_to_string(&pid_file)
         && let Ok(pid) = pid_str.trim().parse::<i32>()
@@ -314,9 +314,13 @@ impl AppState {
 
         // Use ~/.local/state/hazelnut/ on all platforms for consistency
         // This matches the path used by the daemon
-        let log_path = dirs::home_dir()
-            .map(|h| h.join(".local").join("state").join("hazelnut"))
-            .unwrap_or_else(|| PathBuf::from("/tmp"))
+        let log_path = dirs::state_dir()
+            .unwrap_or_else(|| {
+                dirs::home_dir()
+                    .map(|h| h.join(".local").join("state"))
+                    .unwrap_or_else(|| PathBuf::from("/tmp"))
+            })
+            .join("hazelnut")
             .join("hazelnutd.log");
 
         let Ok(mut file) = std::fs::File::open(&log_path) else {

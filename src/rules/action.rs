@@ -234,7 +234,7 @@ impl Action {
 
                     info!("Running (shell): {}", expanded_command);
 
-                    let mut child = std::process::Command::new(shell)
+                    let child = std::process::Command::new(shell)
                         .arg(shell_arg)
                         .arg(&expanded_command)
                         .spawn()
@@ -242,29 +242,24 @@ impl Action {
                             format!("Failed to run shell command: {}", expanded_command)
                         })?;
 
-                    // Wait with a 60-second timeout
+                    // Wait with a 60-second timeout using a channel
                     let timeout = std::time::Duration::from_secs(60);
-                    let start = std::time::Instant::now();
-                    let status = loop {
-                        match child.try_wait() {
-                            Ok(Some(status)) => break status,
-                            Ok(None) => {
-                                if start.elapsed() > timeout {
-                                    let _ = child.kill();
-                                    let _ = child.wait();
-                                    let err_msg = "timed out after 60s";
-                                    crate::notifications::notify_command_error(
-                                        &expanded_command,
-                                        err_msg,
-                                    );
-                                    anyhow::bail!(
-                                        "Command timed out after 60s: {}",
-                                        expanded_command
-                                    );
-                                }
-                                std::thread::sleep(std::time::Duration::from_millis(100));
-                            }
-                            Err(e) => return Err(e.into()),
+                    let (tx, rx) = std::sync::mpsc::channel();
+                    let mut child_for_thread = child;
+                    std::thread::spawn(move || {
+                        let result = child_for_thread.wait();
+                        let _ = tx.send((result, child_for_thread));
+                    });
+
+                    let status = match rx.recv_timeout(timeout) {
+                        Ok((Ok(status), _)) => status,
+                        Ok((Err(e), _)) => return Err(e.into()),
+                        Err(_) => {
+                            // Timeout — we lost ownership of child to the thread,
+                            // but the thread will finish eventually. Log the timeout.
+                            let err_msg = "timed out after 60s";
+                            crate::notifications::notify_command_error(&expanded_command, err_msg);
+                            anyhow::bail!("Command timed out after 60s: {}", expanded_command);
                         }
                     };
 
@@ -298,29 +293,25 @@ impl Action {
                         .spawn()
                         .with_context(|| format!("Failed to run command: {}", actual_command))?;
 
-                    // Wait with a 60-second timeout
+                    // Wait with a 60-second timeout using a channel
                     let timeout = std::time::Duration::from_secs(60);
-                    let start = std::time::Instant::now();
-                    let status = loop {
-                        match child.try_wait() {
-                            Ok(Some(status)) => break status,
-                            Ok(None) => {
-                                if start.elapsed() > timeout {
-                                    let _ = child.kill();
-                                    let _ = child.wait();
-                                    let err_msg = "timed out after 60s";
-                                    crate::notifications::notify_command_error(
-                                        actual_command,
-                                        err_msg,
-                                    );
-                                    anyhow::bail!(
-                                        "Command timed out after 60s: {}",
-                                        actual_command
-                                    );
-                                }
-                                std::thread::sleep(std::time::Duration::from_millis(100));
-                            }
-                            Err(e) => return Err(e.into()),
+                    let (tx, rx) = std::sync::mpsc::channel();
+                    let actual_command_owned = actual_command.to_string();
+                    std::thread::spawn(move || {
+                        let result = child.wait();
+                        let _ = tx.send(result);
+                    });
+
+                    let status = match rx.recv_timeout(timeout) {
+                        Ok(Ok(status)) => status,
+                        Ok(Err(e)) => return Err(e.into()),
+                        Err(_) => {
+                            let err_msg = "timed out after 60s";
+                            crate::notifications::notify_command_error(
+                                &actual_command_owned,
+                                err_msg,
+                            );
+                            anyhow::bail!("Command timed out after 60s: {}", actual_command_owned);
                         }
                     };
 

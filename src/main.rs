@@ -59,9 +59,13 @@ enum Commands {
 /// Show daemon status
 #[cfg(unix)]
 fn show_daemon_status() {
-    let state_dir = dirs::home_dir()
-        .map(|h| h.join(".local").join("state").join("hazelnut"))
-        .unwrap_or_else(|| PathBuf::from("/tmp"));
+    let state_dir = dirs::state_dir()
+        .unwrap_or_else(|| {
+            dirs::home_dir()
+                .map(|h| h.join(".local").join("state"))
+                .unwrap_or_else(|| PathBuf::from("/tmp"))
+        })
+        .join("hazelnut");
 
     let pid_file = state_dir.join("hazelnutd.pid");
     let log_file = state_dir.join("hazelnutd.log");

@@ -127,7 +127,10 @@ pub fn detect_package_manager() -> PackageManager {
     PackageManager::Cargo
 }
 
-/// Run the update command and return the result
+/// Run the update command and return the result.
+///
+/// NOTE: This intentionally uses blocking `Command::status()` calls since it's
+/// only invoked from the CLI `update` subcommand where blocking is expected.
 pub fn run_update(pm: &PackageManager) -> Result<(), String> {
     use std::process::Stdio;
 

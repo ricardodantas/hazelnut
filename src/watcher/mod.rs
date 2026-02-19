@@ -301,26 +301,23 @@ fn scan_existing_background(
     }
 }
 
-/// Recursively collect all file entries from a directory tree.
+/// Recursively iterate all file entries from a directory tree without collecting into Vec.
 fn walkdir(path: &Path) -> Result<Vec<std::fs::DirEntry>> {
     let mut result = Vec::new();
-    walk_recursive(path, &mut result)?;
-    Ok(result)
-}
-
-fn walk_recursive(path: &Path, result: &mut Vec<std::fs::DirEntry>) -> Result<()> {
-    for entry in std::fs::read_dir(path)? {
-        let entry = entry?;
-        let ft = entry.file_type()?;
-        if ft.is_symlink() {
-            // Skip symlinks to avoid potential loops
-            continue;
-        }
-        if ft.is_dir() {
-            walk_recursive(&entry.path(), result)?;
-        } else {
-            result.push(entry);
+    let mut stack = vec![path.to_path_buf()];
+    while let Some(dir) = stack.pop() {
+        for entry in std::fs::read_dir(&dir)? {
+            let entry = entry?;
+            let ft = entry.file_type()?;
+            if ft.is_symlink() {
+                continue;
+            }
+            if ft.is_dir() {
+                stack.push(entry.path());
+            } else {
+                result.push(entry);
+            }
         }
     }
-    Ok(())
+    Ok(result)
 }

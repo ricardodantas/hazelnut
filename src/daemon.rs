@@ -60,18 +60,26 @@ mod unix_daemon {
     /// Get the PID file path
     /// Uses ~/.local/state/hazelnut/ on all platforms for consistency
     fn pid_file_path() -> PathBuf {
-        dirs::home_dir()
-            .map(|h| h.join(".local").join("state").join("hazelnut"))
-            .unwrap_or_else(|| PathBuf::from("/tmp"))
+        dirs::state_dir()
+            .unwrap_or_else(|| {
+                dirs::home_dir()
+                    .map(|h| h.join(".local").join("state"))
+                    .unwrap_or_else(|| PathBuf::from("/tmp"))
+            })
+            .join("hazelnut")
             .join("hazelnutd.pid")
     }
 
     /// Get the log file path
-    /// Uses ~/.local/state/hazelnut/ on all platforms for consistency
+    /// Uses dirs::state_dir() with fallback for portability
     fn log_file_path() -> PathBuf {
-        dirs::home_dir()
-            .map(|h| h.join(".local").join("state").join("hazelnut"))
-            .unwrap_or_else(|| PathBuf::from("/tmp"))
+        dirs::state_dir()
+            .unwrap_or_else(|| {
+                dirs::home_dir()
+                    .map(|h| h.join(".local").join("state"))
+                    .unwrap_or_else(|| PathBuf::from("/tmp"))
+            })
+            .join("hazelnut")
             .join("hazelnutd.log")
     }
 

@@ -91,12 +91,17 @@ fn get_autostart_path() -> Option<PathBuf> {
     {
         // Prefer systemd if available, fallback to XDG autostart
         if is_systemd_available() {
-            dirs::home_dir().map(|h| {
-                h.join(".config")
+            let config = dirs::config_dir().unwrap_or_else(|| {
+                dirs::home_dir()
+                    .map(|h| h.join(".config"))
+                    .unwrap_or_else(|| PathBuf::from("/etc"))
+            });
+            Some(
+                config
                     .join("systemd")
                     .join("user")
-                    .join("hazelnutd.service")
-            })
+                    .join("hazelnutd.service"),
+            )
         } else {
             dirs::config_dir().map(|c| c.join("autostart").join("hazelnutd.desktop"))
         }
