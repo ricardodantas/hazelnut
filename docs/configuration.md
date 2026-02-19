@@ -14,7 +14,7 @@ The configuration file is always located at:
 
 The TUI (`hazelnut`) and daemon (`hazelnutd`) automatically use this default path.
 
-> 💡 **Note**: Use full paths in config files (e.g., `/home/user/Downloads`). The `~` shortcut is expanded automatically.
+> 💡 **Note**: Use full paths in config files (e.g., `/home/user/Downloads`). The `~` shortcut is expanded automatically. Environment variables are also supported: `$HOME/Downloads` or `${HOME}/Downloads`.
 
 ## Complete Example
 
@@ -153,7 +153,7 @@ Watch folders define which directories Hazelnut monitors for changes.
 
 ```toml
 [[watch]]
-path = "/home/user/Downloads"  # Use full paths, ~ is not expanded
+path = "/home/user/Downloads"  # Supports full paths, ~, $VAR, ${VAR}
 recursive = false
 rules = []
 ```
@@ -246,6 +246,8 @@ stop_processing = false
 | `name` | string | — | Human-readable rule name (required) |
 | `enabled` | bool | `true` | Whether rule is active |
 | `stop_processing` | bool | `false` | If true, stop checking other rules after this one matches |
+
+> 💡 **Multiple rule matching**: By default (`stop_processing = false`), **all** matching rules execute in order, not just the first match. This means a single file can trigger multiple rules. Set `stop_processing = true` on a rule to prevent subsequent rules from being evaluated after it matches.
 
 ---
 
@@ -446,7 +448,7 @@ Actions define what to do with matched files.
 
 ### Move
 
-Move file to a destination folder.
+Move file to a destination folder. If the source and destination are on different filesystems, the move automatically falls back to copy + delete. This works for both files and directories.
 
 ```toml
 [rule.action]
@@ -492,7 +494,7 @@ pattern = "{date}_{name}.{ext}"
 |----------|-------------|---------|
 | `{name}` | Filename without extension | `document` |
 | `{filename}` | Full filename with extension | `document.pdf` |
-| `{ext}` | File extension (without dot) | `pdf` |
+| `{ext}` | File extension (without dot) | `pdf` (empty string if no extension) |
 | `{path}` | Full file path | `/home/user/document.pdf` |
 | `{dir}` | Parent directory path | `/home/user` |
 | `{date}` | Current date (YYYY-MM-DD) | `2024-01-15` |
@@ -528,7 +530,7 @@ pattern = "{date:%Y%m%d}_{name}.{ext}"
 
 ### Trash
 
-Move file to system trash (recoverable).
+Move file to system trash (recoverable). Uses native OS trash integration (Finder's Trash on macOS, freedesktop trash on Linux), with a manual fallback if the system trash is unavailable.
 
 ```toml
 [rule.action]
@@ -548,7 +550,9 @@ type = "delete"
 
 ### Run
 
-Execute a shell command.
+Execute a shell command. Commands have a **60-second timeout** and are terminated if they exceed it.
+
+> 💡 **Security**: Pattern variables (`{path}`, `{filename}`, `{name}`, `{ext}`) are automatically shell-escaped to prevent command injection from filenames with special characters.
 
 ```toml
 [rule.action]
@@ -586,7 +590,7 @@ args = ["{path}"]
 
 ### Archive
 
-Create a zip archive of the file.
+Create a zip archive of the file or directory. When archiving a directory, all contents are included recursively.
 
 ```toml
 [rule.action]

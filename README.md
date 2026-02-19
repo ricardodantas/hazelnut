@@ -56,13 +56,13 @@
 <td width="50%">
 
 ### 📁 Smart File Watching
-Watch any folder for new and changed files with configurable debouncing and recursive monitoring.
+Watch any folder for new and changed files with configurable debouncing and recursive monitoring. Paths support `~`, `$VAR`, and `${VAR}` expansion.
 
 ### 🎯 Flexible Rules Engine
-Define powerful rules with conditions based on name, extension, size, age, and more.
+Define powerful rules with conditions based on name, extension, size, age, and more. Multiple rules can match the same file — all matching rules execute in order.
 
 ### ⚡ Powerful Actions
-Move, copy, rename, delete, archive files, or run custom scripts — all automated.
+Move, copy, rename, delete, archive files or directories, send to trash, or run custom scripts — all automated. Cross-filesystem moves are handled transparently.
 
 </td>
 <td width="50%">
@@ -159,7 +159,7 @@ Hazelnut needs **two things** to work:
 # STEP 1: Define which folders to watch
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 [[watch]]
-path = "/home/youruser/Downloads"  # Use full path (~ not expanded)
+path = "/home/youruser/Downloads"  # Full path, ~, $HOME all work
 recursive = false                   # Set true to include subfolders
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -299,7 +299,7 @@ You can manage watch folders directly in the TUI:
 
 The watch editor dialog allows you to configure:
 
-- **Path** - Full path to the folder to watch (use absolute paths, `~` is not expanded)
+- **Path** - Path to the folder to watch (supports `~`, `$VAR`, `${VAR}`, or absolute paths)
 - **Recursive** - Whether to include subdirectories
 
 Use `Tab` to move between fields, `Enter` to save, and `Esc` to cancel.
@@ -398,7 +398,7 @@ pattern = "{date}_{name}.{ext}"
 |----------|-------------|---------|
 | `{name}` | Filename without extension | `document` |
 | `{filename}` | Full filename | `document.pdf` |
-| `{ext}` | Extension | `pdf` |
+| `{ext}` | Extension | `pdf` (empty if none) |
 | `{path}` | Full path | `/home/user/document.pdf` |
 | `{dir}` | Parent directory | `/home/user` |
 | `{date}` | Current date | `2024-01-15` |
