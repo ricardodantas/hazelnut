@@ -921,6 +921,11 @@ pattern = "{date:YYYY-MM-DD}_{name}.{ext}"`}</code></pre>
     transition: opacity 0.2s, color 0.2s;
   }
 
+  .docs-nav a.active {
+    color: var(--accent-purple);
+    opacity: 1;
+  }
+
   .docs-nav a:hover {
     opacity: 1;
     color: var(--accent-purple);
@@ -1245,4 +1250,34 @@ pattern = "{date:YYYY-MM-DD}_{name}.{ext}"`}</code></pre>
       }
     });
   });
+
+  // docs section handler
+  const sections = [...document.querySelectorAll("section[id]")];
+  function updateActiveNav() {
+    let active = sections[0];
+    for (const section of sections) {
+      const rect = section.getBoundingClientRect();
+      const navHeight = parseFloat(
+        getComputedStyle(document.documentElement).getPropertyValue(
+          "--nav-height",
+        ),
+      );
+      if (rect.top <= navHeight + 100) {
+        active = section;
+      } else {
+        break;
+      }
+    }
+
+    document
+      .querySelectorAll(".docs-nav a.active")
+      .forEach((a) => a.classList.remove("active"));
+    document
+      .querySelector(`.docs-nav a[href="#${active.id}"]`)
+      ?.classList.add("active");
+  }
+
+  window.addEventListener("scroll", updateActiveNav);
+  // update active nav on first load
+  updateActiveNav();
 </script>
