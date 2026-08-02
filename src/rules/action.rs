@@ -20,6 +20,7 @@ static DATE_FORMAT_RE: LazyLock<Regex> =
 pub enum Action {
     /// Move file to a destination folder
     Move {
+        /// Destination folder (supports {name}, {ext}, {date}, etc.)
         destination: PathBuf,
         /// Create destination if it doesn't exist
         #[serde(default = "default_true")]
@@ -31,6 +32,7 @@ pub enum Action {
 
     /// Copy file to a destination folder
     Copy {
+        /// Destination folder (supports {name}, {ext}, {date}, etc.)
         destination: PathBuf,
         #[serde(default = "default_true")]
         create_destination: bool,
@@ -84,7 +86,7 @@ impl Action {
                 create_destination,
                 overwrite,
             } => {
-                let dest = expand_path(destination);
+                let dest = expand_destination(destination, path)?;
 
                 if *create_destination {
                     std::fs::create_dir_all(&dest).with_context(|| {
@@ -136,7 +138,7 @@ impl Action {
                 create_destination,
                 overwrite,
             } => {
-                let dest = expand_path(destination);
+                let dest = expand_destination(destination, path)?;
 
                 if *create_destination {
                     std::fs::create_dir_all(&dest)?;
@@ -464,6 +466,12 @@ fn expand_path(path: &Path) -> PathBuf {
     crate::expand_path(path)
 }
 
+/// Expand template variables, then home and environment variables, in a destination folder.
+fn expand_destination(destination: &Path, path: &Path) -> Result<PathBuf> {
+    let expanded = expand_pattern(&destination.to_string_lossy(), path)?;
+    Ok(expand_path(Path::new(&expanded)))
+}
+
 /// Internal pattern expansion with optional shell escaping of path-derived values.
 fn expand_pattern_inner(pattern: &str, path: &Path, shell_escape: bool) -> Result<String> {
     let mut result = pattern.to_string();
@@ -530,6 +538,8 @@ fn expand_pattern_shell_escaped(pattern: &str, path: &Path) -> Result<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use chrono::Local;
+    use std::fs;
 
     #[test]
     fn test_expand_pattern() {
@@ -538,7 +548,16 @@ mod tests {
         assert_eq!(expand_pattern("{name}", path).unwrap(), "test");
         assert_eq!(expand_pattern("{ext}", path).unwrap(), "pdf");
         assert_eq!(expand_pattern("{filename}", path).unwrap(), "test.pdf");
+        assert_eq!(expand_pattern("{path}", path).unwrap(), "/tmp/test.pdf");
+        assert_eq!(expand_pattern("{dir}", path).unwrap(), "/tmp");
         assert_eq!(expand_pattern("{name}.{ext}", path).unwrap(), "test.pdf");
+        assert_eq!(expand_pattern("{unknown}", path).unwrap(), "{unknown}");
+
+        let date = expand_pattern("{date}", path).unwrap();
+        assert!(chrono::NaiveDate::parse_from_str(&date, "%Y-%m-%d").is_ok());
+
+        let datetime = expand_pattern("{datetime}", path).unwrap();
+        assert!(chrono::NaiveDateTime::parse_from_str(&datetime, "%Y-%m-%d_%H-%M-%S").is_ok());
     }
 
     #[test]
@@ -547,5 +566,93 @@ mod tests {
         let path = Path::new("~/Downloads");
         let expanded = expand_path(path);
         assert!(!expanded.to_string_lossy().contains('~'));
+    }
+
+    #[test]
+    fn move_expands_date_in_destination_directory() {
+        let temp = tempfile::tempdir().unwrap();
+        let source = temp.path().join("report.txt");
+        fs::write(&source, "report contents").unwrap();
+
+        let destination = temp.path().join("archive").join("{date:%Y%m%d}");
+        let date_before = Local::now().format("%Y%m%d").to_string();
+        Action::Move {
+            destination: destination.clone(),
+            create_destination: true,
+            overwrite: false,
+        }
+        .execute(&source)
+        .unwrap();
+        let date_after = Local::now().format("%Y%m%d").to_string();
+
+        let moved_before = destination
+            .parent()
+            .unwrap()
+            .join(date_before)
+            .join("report.txt");
+        let moved_after = destination
+            .parent()
+            .unwrap()
+            .join(date_after)
+            .join("report.txt");
+        let moved = if moved_before.exists() {
+            moved_before
+        } else {
+            moved_after
+        };
+
+        assert!(!source.exists());
+        assert_eq!(fs::read_to_string(moved).unwrap(), "report contents");
+    }
+
+    #[test]
+    fn copy_expands_file_variables_in_destination_directory() {
+        let temp = tempfile::tempdir().unwrap();
+        let source = temp.path().join("quarterly-report.pdf");
+        fs::write(&source, "copy contents").unwrap();
+
+        let destination = temp.path().join("backup").join("{ext}").join("{name}");
+        Action::Copy {
+            destination,
+            create_destination: true,
+            overwrite: false,
+        }
+        .execute(&source)
+        .unwrap();
+
+        let copied = temp
+            .path()
+            .join("backup/pdf/quarterly-report/quarterly-report.pdf");
+        assert_eq!(fs::read_to_string(&source).unwrap(), "copy contents");
+        assert_eq!(fs::read_to_string(copied).unwrap(), "copy contents");
+    }
+
+    #[test]
+    fn copy_rejects_existing_destination_when_overwrite_is_false() {
+        let temp = tempfile::tempdir().unwrap();
+        let source = temp.path().join("report.txt");
+        let destination = temp.path().join("backup").join("txt");
+        fs::create_dir_all(&destination).unwrap();
+        fs::write(&source, "new contents").unwrap();
+        fs::write(destination.join("report.txt"), "existing contents").unwrap();
+
+        let error = Action::Copy {
+            destination: temp.path().join("backup").join("{ext}"),
+            create_destination: true,
+            overwrite: false,
+        }
+        .execute(&source)
+        .unwrap_err();
+
+        assert!(
+            error
+                .to_string()
+                .contains("Destination exists and overwrite is false")
+        );
+        assert_eq!(fs::read_to_string(&source).unwrap(), "new contents");
+        assert_eq!(
+            fs::read_to_string(destination.join("report.txt")).unwrap(),
+            "existing contents"
+        );
     }
 }

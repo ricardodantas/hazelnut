@@ -530,7 +530,7 @@ age_days_less_than = 7  # Newer than 7 days`}</code></pre>
         <div class="code-block">
           <pre><code>{`[rule.action]
 type = "move"
-destination = "~/Documents/PDFs"
+destination = "~/Documents/Archive/{date:%Y%m%d}"
 create_destination = true  # Create folder if missing
 overwrite = false  # Don't overwrite existing files`}</code></pre>
         </div>
@@ -540,10 +540,12 @@ overwrite = false  # Don't overwrite existing files`}</code></pre>
         <div class="code-block">
           <pre><code>{`[rule.action]
 type = "copy"
-destination = "~/Backup"
+destination = "~/Backup/{ext}/{name}"
 create_destination = true
 overwrite = false`}</code></pre>
         </div>
+
+        <p>Move and copy templates expand the destination directory only. Hazelnut preserves the original filename inside the expanded directory.</p>
 
         <h3>Rename</h3>
         <div class="code-block">
@@ -552,7 +554,7 @@ type = "rename"
 pattern = "{date}_{name}.{ext}"`}</code></pre>
         </div>
 
-        <p>Available pattern variables:</p>
+        <p>Available destination and rename template variables:</p>
         <ul>
           <li><code>{`{name}`}</code> - Filename without extension</li>
           <li><code>{`{filename}`}</code> - Full filename</li>
@@ -654,7 +656,7 @@ name_matches = "invoice*.pdf"
 
 [rule.action]
 type = "rename"
-pattern = "{date:YYYY-MM-DD}_{name}.{ext}"`}</code></pre>
+pattern = "{date:%Y-%m-%d}_{name}.{ext}"`}</code></pre>
         </div>
       </section>
 
