@@ -1006,7 +1006,7 @@ dependencies = [
 
 [[package]]
 name = "hazelnut"
-version = "0.2.49"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "assert_fs",
