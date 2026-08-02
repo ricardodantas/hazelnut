@@ -622,7 +622,7 @@ impl WatchEditorState {
     ) -> Self {
         let path = watch.path.display().to_string();
         let cursor_path = path.len();
-        let rules_cursor = 0.min(available_rules.len().saturating_sub(1));
+        let rules_cursor = 0;
         Self {
             field: WatchEditorField::Path,
             editing_index: Some(index),

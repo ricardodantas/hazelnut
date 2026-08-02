@@ -453,14 +453,14 @@ Move file to a destination folder. If the source and destination are on differen
 ```toml
 [rule.action]
 type = "move"
-destination = "~/Documents/Archive"
+destination = "~/Documents/Archive/{date:%Y%m%d}"
 create_destination = true  # Create folder if missing (default: true)
 overwrite = false          # Overwrite existing files (default: false)
 ```
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `destination` | string | — | Target directory (required) |
+| `destination` | string | — | Target directory; supports template variables (required) |
 | `create_destination` | bool | `true` | Create directory if it doesn't exist |
 | `overwrite` | bool | `false` | Overwrite if file exists at destination |
 
@@ -471,12 +471,14 @@ Copy file to a destination (original remains).
 ```toml
 [rule.action]
 type = "copy"
-destination = "~/Backup"
+destination = "~/Backup/{ext}/{name}"
 create_destination = true
 overwrite = false
 ```
 
 Same options as Move.
+
+Move and copy templates expand the destination directory only. Hazelnut preserves the original filename inside the expanded directory.
 
 ### Rename
 
@@ -488,7 +490,9 @@ type = "rename"
 pattern = "{date}_{name}.{ext}"
 ```
 
-#### Pattern Variables
+### Pattern Variables
+
+These variables are available in move and copy destination directories and in rename patterns.
 
 | Variable | Description | Example |
 |----------|-------------|---------|
@@ -721,7 +725,7 @@ name = "Date-prefix invoices"
 name_regex = "^invoice.*\\.pdf$"
 [rule.action]
 type = "rename"
-pattern = "{date:YYYY-MM-DD}_{filename}"
+pattern = "{date:%Y-%m-%d}_{filename}"
 
 [[rule]]
 name = "Rename photos with datetime"

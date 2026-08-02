@@ -126,6 +126,8 @@ type = "trash"
 - `delete` - Permanently delete
 - `run` - Execute shell command
 
+Move and copy destinations support `{name}`, `{filename}`, `{ext}`, `{path}`, `{dir}`, `{date}`, `{datetime}`, and `{date:FORMAT}` template variables. Templates expand the destination folder, and Hazelnut preserves the original filename.
+
 ## Themes
 
 15 themes available via ratatui-themes:

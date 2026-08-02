@@ -207,10 +207,8 @@ fn handle_dashboard_key(state: &mut AppState, key: KeyEvent) {
         KeyCode::Char('r') => state.view = View::Rules,
         KeyCode::Char('w') => state.view = View::Watches,
         KeyCode::Char('l') => state.view = View::Log,
-        KeyCode::Char('u') | KeyCode::Char('U') => {
-            if state.update_available.is_some() {
-                state.mode = Mode::UpdateConfirm;
-            }
+        KeyCode::Char('u') | KeyCode::Char('U') if state.update_available.is_some() => {
+            state.mode = Mode::UpdateConfirm;
         }
         _ => {}
     }

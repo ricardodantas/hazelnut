@@ -369,7 +369,7 @@ is_hidden = true      # Match hidden files (starting with .)
 ```toml
 [rule.action]
 type = "move"
-destination = "~/Documents/Archive"
+destination = "~/Documents/Archive/{date:%Y%m%d}"
 create_destination = true  # Create folder if missing
 overwrite = false          # Don't overwrite existing files
 ```
@@ -379,7 +379,7 @@ overwrite = false          # Don't overwrite existing files
 ```toml
 [rule.action]
 type = "copy"
-destination = "~/Backup"
+destination = "~/Backup/{ext}/{name}"
 create_destination = true
 overwrite = false
 ```
@@ -392,7 +392,9 @@ type = "rename"
 pattern = "{date}_{name}.{ext}"
 ```
 
-**Available variables:**
+Move and copy destinations support the same template variables as rename patterns. Templates expand the destination folder; the original filename is preserved.
+
+**Available template variables:**
 
 | Variable | Description | Example |
 |----------|-------------|---------|
@@ -532,7 +534,7 @@ name_regex = "^invoice.*\\.pdf$"
 
 [rule.action]
 type = "rename"
-pattern = "{date:YYYY-MM-DD}_{filename}"
+pattern = "{date:%Y-%m-%d}_{filename}"
 ```
 </details>
 
