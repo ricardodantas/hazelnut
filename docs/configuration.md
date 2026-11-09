@@ -757,7 +757,15 @@ hazelnut run
 
 # Actually apply the actions
 hazelnut run --apply
+
+# Process a single folder
+hazelnut run --dir ~/Downloads
 ```
+
+`hazelnut run` filters rules the same way the daemon does: each file only gets the
+rules listed in the `rules` of the most specific watch that contains it (an empty
+list means all rules). With `--dir`, a folder that is not inside any watch gets all
+rules.
 
 ### Debug Logging
 

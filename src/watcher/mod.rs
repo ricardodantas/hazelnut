@@ -1,8 +1,10 @@
 //! File system watcher
 
 mod handler;
+mod scopes;
 
 pub use handler::EventHandler;
+pub use scopes::WatchScopes;
 
 use anyhow::Result;
 use notify::{Config, RecommendedWatcher, RecursiveMode, Watcher as NotifyWatcher};
@@ -23,10 +25,8 @@ pub struct Watcher {
     rx: mpsc::Receiver<Result<notify::Event, notify::Error>>,
     event_handler: EventHandler,
     files_processed: Arc<AtomicU64>,
-    /// Mapping of watched directory path → allowed rule names (empty = all rules)
-    watch_rules: std::collections::HashMap<std::path::PathBuf, Vec<String>>,
-    /// Cache of canonical paths for watched directories
-    canonical_cache: std::collections::HashMap<std::path::PathBuf, std::path::PathBuf>,
+    /// Watched directories and the rule names allowed in each
+    scopes: WatchScopes,
 }
 
 impl Watcher {
@@ -53,8 +53,7 @@ impl Watcher {
             rx,
             event_handler: EventHandler::new(debounce_seconds),
             files_processed: Arc::new(AtomicU64::new(0)),
-            watch_rules: std::collections::HashMap::new(),
-            canonical_cache: std::collections::HashMap::new(),
+            scopes: WatchScopes::new(),
         })
     }
 
@@ -77,20 +76,13 @@ impl Watcher {
         };
 
         self.watcher.watch(path, mode)?;
-        let canonical = std::fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf());
-        self.watch_rules.insert(canonical.clone(), rules);
-        self.canonical_cache
-            .insert(canonical.clone(), canonical.clone());
+        let allowed_rules: Option<Vec<String>> = Some(rules.clone()).filter(|r| !r.is_empty());
+        self.scopes.insert(path, rules);
         info!("Watching: {} (recursive: {})", path.display(), recursive);
 
         // Initial scan — run in a background thread so TUI startup isn't blocked.
         let scan_path = path.to_path_buf();
         let scan_rules: Arc<Vec<Rule>> = Arc::new(self.engine.rules().to_vec());
-        let allowed_rules: Option<Vec<String>> = self
-            .watch_rules
-            .get(&canonical)
-            .filter(|r| !r.is_empty())
-            .cloned();
         let counter = Arc::clone(&self.files_processed);
         std::thread::spawn(move || {
             scan_existing_background(&scan_path, recursive, &scan_rules, allowed_rules, counter);
@@ -135,7 +127,7 @@ impl Watcher {
 
                     for path in paths_to_process {
                         info!("File event detected: {}", path.display());
-                        let allowed = self.allowed_rules_for(&path);
+                        let allowed = self.scopes.allowed_rules_for(&path);
                         match self.engine.process_filtered(&path, allowed) {
                             Ok(true) => processed += 1,
                             Ok(false) => {} // No matching rule
@@ -201,57 +193,6 @@ impl Watcher {
     /// Get the rule engine
     pub fn engine(&self) -> &RuleEngine {
         &self.engine
-    }
-
-    /// Find the allowed rules filter for a file path based on which watch directory it belongs to
-    fn allowed_rules_for(&self, file_path: &Path) -> Option<&[String]> {
-        // Try matching with the raw event path first to avoid a syscall per event.
-        // Watch paths are already canonicalized at registration time.
-        let mut best_match: Option<(&std::path::PathBuf, &Vec<String>)> = None;
-        for (watch_path, rules) in &self.watch_rules {
-            let watch_canonical = self.canonical_cache.get(watch_path).unwrap_or(watch_path);
-            if file_path.starts_with(watch_canonical)
-                && best_match.is_none_or(|(prev, _)| {
-                    watch_canonical.as_os_str().len()
-                        > self
-                            .canonical_cache
-                            .get(prev)
-                            .unwrap_or(prev)
-                            .as_os_str()
-                            .len()
-                })
-            {
-                best_match = Some((watch_path, rules));
-            }
-        }
-
-        // Fallback: canonicalize the event path only if raw comparison found nothing
-        // (handles symlinked event paths).
-        if best_match.is_none()
-            && let Ok(canonical) = std::fs::canonicalize(file_path)
-        {
-            for (watch_path, rules) in &self.watch_rules {
-                let watch_canonical = self.canonical_cache.get(watch_path).unwrap_or(watch_path);
-                if canonical.starts_with(watch_canonical)
-                    && best_match.is_none_or(|(prev, _)| {
-                        watch_canonical.as_os_str().len()
-                            > self
-                                .canonical_cache
-                                .get(prev)
-                                .unwrap_or(prev)
-                                .as_os_str()
-                                .len()
-                    })
-                {
-                    best_match = Some((watch_path, rules));
-                }
-            }
-        }
-
-        match best_match {
-            Some((_, rules)) if !rules.is_empty() => Some(rules.as_slice()),
-            _ => None,
-        }
     }
 }
 

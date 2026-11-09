@@ -148,6 +148,9 @@ async fn main() -> Result<()> {
         }
         Some(Commands::Run { apply, dir }) => {
             let config = hazelnut::Config::load(cli.config.as_deref())?;
+            // Same rule filtering as the daemon: each file only gets the rules listed
+            // for the most specific watch containing it (all rules outside any watch).
+            let scopes = hazelnut::watcher::WatchScopes::from_config(&config.watches);
             let engine = hazelnut::RuleEngine::new(config.rules);
 
             let dirs: Vec<_> = if let Some(d) = dir {
@@ -166,7 +169,8 @@ async fn main() -> Result<()> {
                 for entry in entries.flatten() {
                     let path = entry.path();
                     if path.is_file() {
-                        let actions = engine.evaluate_all(&path)?;
+                        let allowed = scopes.allowed_rules_for(&path);
+                        let actions = engine.evaluate_filtered(&path, allowed)?;
                         for action in actions {
                             if apply {
                                 println!("  Applying: {} -> {:?}", path.display(), action);
