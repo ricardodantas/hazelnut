@@ -1,7 +1,7 @@
 //! Rule engine - evaluates and executes rules
 
 use anyhow::Result;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use tracing::{debug, info, trace};
 
 use super::{Action, Rule};
@@ -98,12 +98,25 @@ impl RuleEngine {
 
     /// Evaluate filtered rules and execute all matching actions
     pub fn process_filtered(&self, path: &Path, allowed_rules: Option<&[String]>) -> Result<bool> {
+        Ok(self.apply_filtered(path, allowed_rules)?.is_some())
+    }
+
+    /// Evaluate filtered rules and execute all matching actions.
+    ///
+    /// Returns `None` when no rule matched, otherwise the paths the executed actions
+    /// created (move, copy, rename and archive destinations).
+    pub fn apply_filtered(
+        &self,
+        path: &Path,
+        allowed_rules: Option<&[String]>,
+    ) -> Result<Option<Vec<PathBuf>>> {
         let actions = self.evaluate_filtered(path, allowed_rules)?;
         if actions.is_empty() {
-            return Ok(false);
+            return Ok(None);
         }
+        let mut created = Vec::new();
         for action in &actions {
-            action.execute(path)?;
+            created.extend(action.execute(path)?);
             // After a destructive action, the file is gone — stop processing
             if matches!(
                 action,
@@ -112,7 +125,7 @@ impl RuleEngine {
                 break;
             }
         }
-        Ok(true)
+        Ok(Some(created))
     }
 
     /// Evaluate rules and execute all matching actions
@@ -264,5 +277,45 @@ mod tests {
             .evaluate_filtered(Path::new("/tmp/test.pdf"), Some(&empty))
             .unwrap();
         assert!(!result.is_empty());
+    }
+
+    fn move_pdfs_to(destination: PathBuf) -> RuleEngine {
+        RuleEngine::new(vec![Rule::new(
+            "PDFs",
+            Condition {
+                extension: Some("pdf".to_string()),
+                ..Default::default()
+            },
+            Action::Move {
+                destination,
+                create_destination: true,
+                overwrite: false,
+            },
+        )])
+    }
+
+    #[test]
+    fn apply_filtered_should_return_the_paths_the_actions_created() {
+        let temp = tempfile::tempdir().unwrap();
+        let file = temp.path().join("doc.pdf");
+        std::fs::write(&file, "x").unwrap();
+        let engine = move_pdfs_to(temp.path().join("pdfs"));
+
+        let created = engine.apply_filtered(&file, None).unwrap();
+
+        assert_eq!(
+            created,
+            Some(vec![temp.path().join("pdfs").join("doc.pdf")])
+        );
+    }
+
+    #[test]
+    fn apply_filtered_should_return_none_when_no_rule_matches() {
+        let temp = tempfile::tempdir().unwrap();
+        let file = temp.path().join("notes.txt");
+        std::fs::write(&file, "x").unwrap();
+        let engine = move_pdfs_to(temp.path().join("pdfs"));
+
+        assert_eq!(engine.apply_filtered(&file, None).unwrap(), None);
     }
 }

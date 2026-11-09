@@ -153,31 +153,37 @@ async fn main() -> Result<()> {
             let scopes = hazelnut::watcher::WatchScopes::from_config(&config.watches);
             let engine = hazelnut::RuleEngine::new(config.rules);
 
-            let dirs: Vec<_> = if let Some(d) = dir {
-                vec![d]
+            // Folders to process, and whether to descend into their subfolders
+            let targets: Vec<(PathBuf, bool)> = if let Some(d) = dir {
+                // A folder inside a recursive watch is processed recursively too
+                let recursive = scopes.find(&d).is_some_and(|scope| scope.is_recursive());
+                vec![(d, recursive)]
             } else {
                 config
                     .watches
                     .iter()
-                    .map(|w| hazelnut::expand_path(&w.path))
+                    .map(|w| (hazelnut::expand_path(&w.path), w.recursive))
                     .collect()
             };
 
-            for dir in dirs {
+            // A file inside overlapping watches is only processed once
+            let mut seen = std::collections::HashSet::new();
+            for (dir, recursive) in targets {
                 println!("Processing: {}", dir.display());
-                let entries = std::fs::read_dir(&dir)?;
-                for entry in entries.flatten() {
-                    let path = entry.path();
-                    if path.is_file() {
-                        let allowed = scopes.allowed_rules_for(&path);
-                        let actions = engine.evaluate_filtered(&path, allowed)?;
-                        for action in actions {
-                            if apply {
-                                println!("  Applying: {} -> {:?}", path.display(), action);
-                                action.execute(&path)?;
-                            } else {
-                                println!("  [dry-run] {} -> {:?}", path.display(), action);
-                            }
+                // The listing is taken up front, so files the rules move into
+                // subfolders are not visited again
+                for path in hazelnut::watcher::list_entries(&dir, recursive)? {
+                    if !path.is_file() || !seen.insert(path.clone()) {
+                        continue;
+                    }
+                    let allowed = scopes.allowed_rules_for(&path);
+                    let actions = engine.evaluate_filtered(&path, allowed)?;
+                    for action in actions {
+                        if apply {
+                            println!("  Applying: {} -> {:?}", path.display(), action);
+                            action.execute(&path)?;
+                        } else {
+                            println!("  [dry-run] {} -> {:?}", path.display(), action);
                         }
                     }
                 }

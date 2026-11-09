@@ -2,7 +2,9 @@
 
 use indexmap::IndexMap;
 use notify::Event;
-use std::path::PathBuf;
+use std::collections::HashMap;
+use std::path::{Path, PathBuf};
+use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
 use std::time::{Duration, Instant};
 
 /// Maximum number of entries in the debounce map before forcing a cleanup
@@ -52,6 +54,12 @@ impl EventHandler {
         paths_to_process
     }
 
+    /// Treat `path` as just processed, so events for it within the debounce window
+    /// are dropped
+    pub fn mark_seen(&mut self, path: &Path) {
+        self.recent.insert(path.to_path_buf(), Instant::now());
+    }
+
     /// Clean up old entries (call periodically)
     pub fn cleanup(&mut self) {
         let now = Instant::now();
@@ -59,6 +67,67 @@ impl EventHandler {
 
         self.recent
             .retain(|_, &mut last| now.duration_since(last) < threshold);
+    }
+}
+
+/// How long events for a path that hazelnut itself just created are ignored
+const OWN_OUTPUT_TTL: Duration = Duration::from_secs(10);
+
+/// Created path -> (root of the watch the original file was in, when it was created)
+type CreatedPaths = HashMap<PathBuf, (Option<PathBuf>, Instant)>;
+
+/// Paths recently created by hazelnut's own actions (move, copy, rename and archive
+/// destinations), each with the watch the original file was in.
+///
+/// When a rule moves a file to a folder inside the same recursive watch, the OS
+/// reports the new file like any other. Rules must not run on it again: with
+/// destinations such as `{dir}/sorted` or `{datetime}` every pass picks a new folder
+/// and the file would keep moving. A file moved into a *different* watch is still
+/// processed with that watch's rules, so watches can be chained.
+///
+/// Shared (cheaply cloned) between the event loop and the initial-scan threads.
+#[derive(Debug, Clone, Default)]
+pub(crate) struct OwnOutputs {
+    created: Arc<Mutex<CreatedPaths>>,
+}
+
+impl OwnOutputs {
+    /// Remember that a rule run on a file from the watch rooted at `watch_root`
+    /// created `path`
+    pub(crate) fn record(&self, path: &Path, watch_root: Option<&Path>) {
+        let now = Instant::now();
+        let entry = (watch_root.map(Path::to_path_buf), now);
+        let mut created = self.lock();
+        created.retain(|_, (_, at)| now.duration_since(*at) < OWN_OUTPUT_TTL);
+        // Event paths may spell the location differently (symlinked folders)
+        if let Ok(canonical) = std::fs::canonicalize(path) {
+            created.insert(canonical, entry.clone());
+        }
+        created.insert(path.to_path_buf(), entry);
+    }
+
+    /// Whether `path` was just created by a rule run on a file from the same watch
+    pub(crate) fn is_own(&self, path: &Path, watch_root: Option<&Path>) -> bool {
+        let created = self.lock();
+        if created.is_empty() {
+            return false;
+        }
+        let recorded = |p: &Path| {
+            created.get(p).is_some_and(|(root, at)| {
+                at.elapsed() < OWN_OUTPUT_TTL && root.as_deref() == watch_root
+            })
+        };
+        recorded(path)
+            || path
+                .parent()
+                .and_then(|parent| std::fs::canonicalize(parent).ok())
+                .zip(path.file_name())
+                .is_some_and(|(parent, name)| recorded(&parent.join(name)))
+    }
+
+    fn lock(&self) -> MutexGuard<'_, CreatedPaths> {
+        // The map stays consistent even if a holder panicked
+        self.created.lock().unwrap_or_else(PoisonError::into_inner)
     }
 }
 

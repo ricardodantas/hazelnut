@@ -122,6 +122,113 @@ fn run_with_dir_outside_every_watch_should_apply_all_rules() {
     );
 }
 
+/// One watch with a nested file tree; `.txt` files move to `destination`.
+fn write_tree_config(root: &Path, recursive: bool, destination: &Path) -> PathBuf {
+    let watched = root.join("watched");
+    std::fs::create_dir_all(watched.join("sub").join("deeper")).unwrap();
+    std::fs::write(watched.join("top.txt"), "top").unwrap();
+    std::fs::write(watched.join("sub").join("pre.txt"), "pre").unwrap();
+    std::fs::write(watched.join("sub").join("deeper").join("deep.txt"), "deep").unwrap();
+
+    let config = format!(
+        r#"
+[[watch]]
+path = "{watched}"
+recursive = {recursive}
+
+[[rule]]
+name = "txt files"
+[rule.condition]
+extension = "txt"
+[rule.action]
+type = "move"
+destination = "{destination}"
+"#,
+        watched = watched.display(),
+        destination = destination.display(),
+    );
+    let config_path = root.join("config.toml");
+    std::fs::write(&config_path, config).unwrap();
+    config_path
+}
+
+fn planned_files(output: &Output) -> Vec<String> {
+    let mut files: Vec<String> = planned_actions(output)
+        .iter()
+        .filter_map(|line| line.trim_start().strip_prefix("[dry-run] "))
+        .filter_map(|line| line.split(" -> ").next())
+        .map(str::to_owned)
+        .collect();
+    files.sort();
+    files
+}
+
+#[test]
+fn run_should_process_subfolders_of_a_recursive_watch() {
+    let temp = tempfile::tempdir().unwrap();
+    let config = write_tree_config(temp.path(), true, &temp.path().join("out"));
+    let watched = temp.path().join("watched");
+
+    let output = hazelnut_run(&config, &[]);
+
+    assert_eq!(
+        planned_files(&output),
+        vec![
+            watched.join("sub/deeper/deep.txt").display().to_string(),
+            watched.join("sub/pre.txt").display().to_string(),
+            watched.join("top.txt").display().to_string(),
+        ]
+    );
+}
+
+#[test]
+fn run_should_not_process_subfolders_of_a_non_recursive_watch() {
+    let temp = tempfile::tempdir().unwrap();
+    let config = write_tree_config(temp.path(), false, &temp.path().join("out"));
+    let watched = temp.path().join("watched");
+
+    let output = hazelnut_run(&config, &[]);
+
+    assert_eq!(
+        planned_files(&output),
+        vec![watched.join("top.txt").display().to_string()]
+    );
+}
+
+#[test]
+fn run_with_dir_inside_a_recursive_watch_should_process_its_subfolders() {
+    let temp = tempfile::tempdir().unwrap();
+    let config = write_tree_config(temp.path(), true, &temp.path().join("out"));
+    let sub = temp.path().join("watched").join("sub");
+
+    let output = hazelnut_run(&config, &["--dir", sub.to_str().unwrap()]);
+
+    assert_eq!(
+        planned_files(&output),
+        vec![
+            sub.join("deeper/deep.txt").display().to_string(),
+            sub.join("pre.txt").display().to_string(),
+        ]
+    );
+}
+
+#[test]
+fn run_apply_twice_with_destination_inside_a_recursive_watch_should_leave_sorted_files() {
+    let temp = tempfile::tempdir().unwrap();
+    let sorted = temp.path().join("watched").join("sorted");
+    let config = write_tree_config(temp.path(), true, &sorted);
+
+    hazelnut_run(&config, &["--apply"]);
+    hazelnut_run(&config, &["--apply"]);
+
+    let mut files: Vec<_> = std::fs::read_dir(&sorted)
+        .unwrap()
+        .map(|e| e.unwrap().file_name().into_string().unwrap())
+        .collect();
+    files.sort();
+    assert_eq!(files, vec!["deep.txt", "pre.txt", "top.txt"]);
+}
+
 #[test]
 fn run_apply_should_leave_files_that_no_listed_rule_matches() {
     let temp = tempfile::tempdir().unwrap();
