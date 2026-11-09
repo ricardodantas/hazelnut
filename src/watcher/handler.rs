@@ -70,35 +70,64 @@ impl EventHandler {
     }
 }
 
-/// How long events for a path that hazelnut itself just created are ignored
+/// How long a path hazelnut created stays known, counted from the first event batch
+/// that could contain its events
 const OWN_OUTPUT_TTL: Duration = Duration::from_secs(10);
 
-/// Created path -> (root of the watch the original file was in, when it was created)
-type CreatedPaths = HashMap<PathBuf, (Option<PathBuf>, Instant)>;
+/// A path created by one of hazelnut's own actions
+#[derive(Debug, Clone)]
+struct OwnOutput {
+    /// Root of the watch the original file was in
+    watch_root: Option<PathBuf>,
+    /// Rules that already ran on the original file (and the files it came from)
+    rules_applied: Vec<String>,
+    /// Start of the first event batch after the path was created. Until then the
+    /// entry can't expire, however long the event loop is busy.
+    armed_at: Option<Instant>,
+}
 
 /// Paths recently created by hazelnut's own actions (move, copy, rename and archive
-/// destinations), each with the watch the original file was in.
+/// destinations), with the watch the original file was in and the rules that
+/// already ran on it.
 ///
 /// When a rule moves a file to a folder inside the same recursive watch, the OS
-/// reports the new file like any other. Rules must not run on it again: with
-/// destinations such as `{dir}/sorted` or `{datetime}` every pass picks a new folder
-/// and the file would keep moving. A file moved into a *different* watch is still
-/// processed with that watch's rules, so watches can be chained.
+/// reports the new file like any other. The rules that already ran must not run on
+/// it again: with destinations such as `{dir}/sorted` or `{datetime}` every pass
+/// picks a new folder and the file would keep moving. Other rules still run, so a
+/// rename followed by a move keeps working, and each rule runs at most once per
+/// file, which rules out loops. A file moved into a *different* watch gets all of
+/// that watch's rules, so watches can be chained.
 ///
 /// Shared (cheaply cloned) between the event loop and the initial-scan threads.
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub(crate) struct OwnOutputs {
-    created: Arc<Mutex<CreatedPaths>>,
+    created: Arc<Mutex<HashMap<PathBuf, OwnOutput>>>,
+    ttl: Duration,
+}
+
+impl Default for OwnOutputs {
+    fn default() -> Self {
+        Self::with_ttl(OWN_OUTPUT_TTL)
+    }
 }
 
 impl OwnOutputs {
-    /// Remember that a rule run on a file from the watch rooted at `watch_root`
-    /// created `path`
-    pub(crate) fn record(&self, path: &Path, watch_root: Option<&Path>) {
-        let now = Instant::now();
-        let entry = (watch_root.map(Path::to_path_buf), now);
+    fn with_ttl(ttl: Duration) -> Self {
+        Self {
+            created: Arc::default(),
+            ttl,
+        }
+    }
+
+    /// Remember that `rules_applied` ran on a file from the watch rooted at
+    /// `watch_root` and created `path`
+    pub(crate) fn record(&self, path: &Path, watch_root: Option<&Path>, rules_applied: &[String]) {
+        let entry = OwnOutput {
+            watch_root: watch_root.map(Path::to_path_buf),
+            rules_applied: rules_applied.to_vec(),
+            armed_at: None,
+        };
         let mut created = self.lock();
-        created.retain(|_, (_, at)| now.duration_since(*at) < OWN_OUTPUT_TTL);
         // Event paths may spell the location differently (symlinked folders)
         if let Ok(canonical) = std::fs::canonicalize(path) {
             created.insert(canonical, entry.clone());
@@ -106,26 +135,49 @@ impl OwnOutputs {
         created.insert(path.to_path_buf(), entry);
     }
 
-    /// Whether `path` was just created by a rule run on a file from the same watch
-    pub(crate) fn is_own(&self, path: &Path, watch_root: Option<&Path>) -> bool {
-        let created = self.lock();
-        if created.is_empty() {
-            return false;
-        }
-        let recorded = |p: &Path| {
-            created.get(p).is_some_and(|(root, at)| {
-                at.elapsed() < OWN_OUTPUT_TTL && root.as_deref() == watch_root
-            })
-        };
-        recorded(path)
-            || path
-                .parent()
-                .and_then(|parent| std::fs::canonicalize(parent).ok())
-                .zip(path.file_name())
-                .is_some_and(|(parent, name)| recorded(&parent.join(name)))
+    /// Call at the start of each event batch, with the time its events were polled:
+    /// starts the clock on paths created since the last batch and forgets expired ones
+    pub(crate) fn start_batch(&self, now: Instant) {
+        let ttl = self.ttl;
+        self.lock().retain(|_, entry| match entry.armed_at {
+            None => {
+                entry.armed_at = Some(now);
+                true
+            }
+            Some(armed_at) => now.saturating_duration_since(armed_at) < ttl,
+        });
     }
 
-    fn lock(&self) -> MutexGuard<'_, CreatedPaths> {
+    /// The rules that already ran, if a rule run on a file from the same watch just
+    /// created `path`. `now` is the start of the current event batch.
+    pub(crate) fn rules_applied(
+        &self,
+        path: &Path,
+        watch_root: Option<&Path>,
+        now: Instant,
+    ) -> Option<Vec<String>> {
+        let created = self.lock();
+        if created.is_empty() {
+            return None;
+        }
+        let lookup = |p: &Path| {
+            created
+                .get(p)
+                .filter(|entry| {
+                    entry.watch_root.as_deref() == watch_root
+                        && entry
+                            .armed_at
+                            .is_none_or(|at| now.saturating_duration_since(at) < self.ttl)
+                })
+                .map(|entry| entry.rules_applied.clone())
+        };
+        lookup(path).or_else(|| {
+            let parent = std::fs::canonicalize(path.parent()?).ok()?;
+            lookup(&parent.join(path.file_name()?))
+        })
+    }
+
+    fn lock(&self) -> MutexGuard<'_, HashMap<PathBuf, OwnOutput>> {
         // The map stays consistent even if a holder panicked
         self.created.lock().unwrap_or_else(PoisonError::into_inner)
     }
@@ -153,5 +205,79 @@ mod tests {
         // Immediate second event should be debounced
         let paths = handler.should_process(&event);
         assert_eq!(paths.len(), 0);
+    }
+
+    const TTL: Duration = Duration::from_secs(10);
+
+    fn recorded(path: &Path, root: &Path) -> OwnOutputs {
+        let outputs = OwnOutputs::with_ttl(TTL);
+        outputs.record(path, Some(root), &["Sort".to_string()]);
+        outputs
+    }
+
+    #[test]
+    fn own_output_should_report_the_rules_already_applied() {
+        let outputs = recorded(Path::new("/w/sorted/a.txt"), Path::new("/w"));
+
+        let applied = outputs.rules_applied(
+            Path::new("/w/sorted/a.txt"),
+            Some(Path::new("/w")),
+            Instant::now(),
+        );
+
+        assert_eq!(applied, Some(vec!["Sort".to_string()]));
+    }
+
+    #[test]
+    fn own_output_should_not_apply_to_another_watch() {
+        let outputs = recorded(Path::new("/w/inbox/a.txt"), Path::new("/w"));
+
+        let applied = outputs.rules_applied(
+            Path::new("/w/inbox/a.txt"),
+            Some(Path::new("/w/inbox")),
+            Instant::now(),
+        );
+
+        assert_eq!(applied, None);
+    }
+
+    #[test]
+    fn own_output_should_not_expire_before_an_event_batch_has_started() {
+        let outputs = recorded(Path::new("/w/sorted/a.txt"), Path::new("/w"));
+        let much_later = Instant::now() + TTL * 100;
+
+        let applied = outputs.rules_applied(
+            Path::new("/w/sorted/a.txt"),
+            Some(Path::new("/w")),
+            much_later,
+        );
+
+        assert_eq!(applied, Some(vec!["Sort".to_string()]));
+    }
+
+    #[test]
+    fn own_output_should_expire_once_its_batch_is_older_than_the_ttl() {
+        let outputs = recorded(Path::new("/w/sorted/a.txt"), Path::new("/w"));
+        let batch = Instant::now();
+        outputs.start_batch(batch);
+
+        let applied = outputs.rules_applied(
+            Path::new("/w/sorted/a.txt"),
+            Some(Path::new("/w")),
+            batch + TTL + Duration::from_millis(1),
+        );
+
+        assert_eq!(applied, None);
+    }
+
+    #[test]
+    fn start_batch_should_forget_expired_outputs() {
+        let outputs = recorded(Path::new("/w/sorted/a.txt"), Path::new("/w"));
+        let batch = Instant::now();
+        outputs.start_batch(batch);
+
+        outputs.start_batch(batch + TTL * 2);
+
+        assert!(outputs.lock().is_empty());
     }
 }

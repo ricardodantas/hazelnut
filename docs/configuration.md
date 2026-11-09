@@ -169,13 +169,16 @@ rules = []
 With `recursive = true`, rules apply to files at any depth below the watched folder:
 files already there when watching starts, new files, and the contents of folders that
 are moved or copied in. `hazelnut run` walks subfolders of recursive watches too.
+Symlinked folders are never followed, and renaming or moving a folder around inside
+the watch does not run the rules again on what it contains.
 
 A rule can move files to a folder inside the same recursive watch (for example
-`destination = "~/Downloads/Sorted/{ext}"` while watching `~/Downloads`). Hazelnut
-does not run rules again on a file it has just moved, copied, renamed or archived
-there, and a move or copy whose destination is where the file already is does
-nothing. A file moved into a *different* watched folder gets that folder's rules, so
-watches can be chained.
+`destination = "~/Downloads/Sorted/{ext}"` while watching `~/Downloads`). When
+Hazelnut moves, copies, renames or archives a file there, the rules that already ran
+on it don't run again on the result, while other rules still do (so a rename rule
+followed by a move rule works). A move or copy whose destination is where the file
+already is does nothing. A file moved into a *different* watched folder gets all of
+that folder's rules, so watches can be chained.
 
 ### Managing Watches in the TUI
 

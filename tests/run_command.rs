@@ -48,15 +48,19 @@ destination = "{b_sorted}"
     config_path
 }
 
-fn hazelnut_run(config: &Path, extra_args: &[&str]) -> Output {
-    let output = Command::new(env!("CARGO_BIN_EXE_hazelnut"))
+fn hazelnut_run_unchecked(config: &Path, extra_args: &[&str]) -> Output {
+    Command::new(env!("CARGO_BIN_EXE_hazelnut"))
         .arg("--config")
         .arg(config)
         .arg("run")
         .args(extra_args)
         .env("NO_COLOR", "1")
         .output()
-        .expect("failed to run hazelnut");
+        .expect("failed to run hazelnut")
+}
+
+fn hazelnut_run(config: &Path, extra_args: &[&str]) -> Output {
+    let output = hazelnut_run_unchecked(config, extra_args);
     assert!(
         output.status.success(),
         "hazelnut run failed: {}",
@@ -213,13 +217,27 @@ fn run_with_dir_inside_a_recursive_watch_should_process_its_subfolders() {
 }
 
 #[test]
+fn run_apply_twice_with_destination_inside_a_recursive_watch_should_succeed() {
+    let temp = tempfile::tempdir().unwrap();
+    let sorted = temp.path().join("watched").join("sorted");
+    let config = write_tree_config(temp.path(), true, &sorted);
+    hazelnut_run(&config, &["--apply"]);
+
+    // The sorted files are now inside the watch, already in their destination
+    let second = hazelnut_run_unchecked(&config, &["--apply"]);
+
+    let stderr = String::from_utf8_lossy(&second.stderr).into_owned();
+    assert_eq!((second.status.code(), stderr), (Some(0), String::new()));
+}
+
+#[test]
 fn run_apply_twice_with_destination_inside_a_recursive_watch_should_leave_sorted_files() {
     let temp = tempfile::tempdir().unwrap();
     let sorted = temp.path().join("watched").join("sorted");
     let config = write_tree_config(temp.path(), true, &sorted);
 
-    hazelnut_run(&config, &["--apply"]);
-    hazelnut_run(&config, &["--apply"]);
+    hazelnut_run_unchecked(&config, &["--apply"]);
+    hazelnut_run_unchecked(&config, &["--apply"]);
 
     let mut files: Vec<_> = std::fs::read_dir(&sorted)
         .unwrap()
