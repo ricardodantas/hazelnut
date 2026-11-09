@@ -12,7 +12,7 @@ hazelnut/
 │   ├── main.rs          # TUI application entry point
 │   ├── daemon.rs        # Background daemon entry point (hazelnutd)
 │   ├── lib.rs           # Shared library code
-│   ├── theme.rs         # Theme wrapper using ratatui-themes (15 themes)
+│   ├── theme.rs         # Theme wrapper using ratatui-themes (17 themes)
 │   ├── update.rs        # Update checking & self-update (crates.io API)
 │   ├── app/             # TUI application logic
 │   │   ├── mod.rs       # App initialization, background thread for updates
@@ -47,7 +47,7 @@ hazelnut/
 - **Rules view**: List, toggle enable/disable, create/edit/delete
 - **Watches view**: List watched folders
 - **Log view**: Activity history with timestamps
-- **15 themes**: Powered by ratatui-themes (shared with Feedo)
+- **17 themes**: Powered by ratatui-themes (shared with Feedo)
 - **Keybindings**: vim-style navigation (j/k), Tab to switch views, ? for help
 - **Auto-update**: Background update check, one-key update via TUI or `hazelnut update` CLI
 - **Daemon status**: Real-time daemon connection status in TUI
@@ -81,7 +81,7 @@ hazelnut/
 | Crate | Version | Purpose |
 |-------|---------|---------|
 | ratatui | 0.30 | TUI framework |
-| ratatui-themes | 0.1 | Shared themes (15 themes) |
+| ratatui-themes | 0.4 | Shared themes (17 themes) |
 | crossterm | 0.29 | Terminal backend |
 | tokio | 1.49 | Async runtime |
 | notify | 9.0.0-rc.1 | Filesystem watcher |
@@ -167,7 +167,7 @@ This avoids macOS-specific paths like `~/Library/Application Support/`.
 ## Current Status
 
 ✅ **Working:**
-- Full TUI with 15 beautiful themes
+- Full TUI with 17 beautiful themes
 - Config loading and parsing
 - Rule engine with conditions and actions
 - File watcher infrastructure
@@ -188,17 +188,23 @@ This avoids macOS-specific paths like `~/Library/Application Support/`.
 
 ## Themes
 
-Press `t` in the TUI to open theme picker (15 themes from ratatui-themes):
-- Catppuccin Mocha, Latte, Frappé, Macchiato
-- Dracula
+Press `t` in the TUI to open theme picker (17 themes from ratatui-themes):
+- Dracula (default)
+- One Dark Pro
 - Nord
+- Catppuccin Mocha/Latte
 - Gruvbox Dark/Light
 - Tokyo Night
-- Monokai Pro
 - Solarized Dark/Light
-- One Dark
-- Everforest
+- Monokai Pro
 - Rosé Pine
+- Kanagawa
+- Everforest
+- Cyberpunk
+- Midnight Commander
+- MSX
+
+The picker lists `ThemeName::all()` from ratatui-themes, so new upstream themes appear without code changes.
 
 ## Keybindings
 

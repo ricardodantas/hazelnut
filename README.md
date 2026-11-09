@@ -91,7 +91,7 @@ Human-readable TOML config that's easy to write and maintain.
 | 📅 **Age Conditions** | Match files by modification date |
 | 🏷️ **Multiple Extensions** | Match any of multiple file types |
 | 📂 **Recursive Watching** | Monitor subdirectories automatically |
-| 🎨 **15 Built-in Themes** | From Dracula to Cyberpunk |
+| 🎨 **17 Built-in Themes** | From Dracula to MSX |
 | 🔔 **Desktop Notifications** | Get alerted on errors (cross-platform) |
 | 📋 **Activity Log** | Full history of all file operations |
 
@@ -626,7 +626,7 @@ args = ["{path}", "-quality", "80", "{path}"]
 
 ## 🎨 Themes
 
-Hazelnut includes **15 beautiful themes** based on popular terminal and editor color schemes.
+Hazelnut includes **17 beautiful themes** based on popular terminal and editor color schemes.
 
 Press `t` in the TUI to open the theme picker with live preview.
 
@@ -653,6 +653,8 @@ Press `t` in the TUI to open the theme picker with live preview.
 | 🌊 **Kanagawa** | Inspired by Katsushika Hokusai |
 | 🌲 **Everforest** | Comfortable green forest theme |
 | 🌆 **Cyberpunk** | Neon-soaked futuristic theme |
+| 🗂️ **Midnight Commander** | Classic file manager theme |
+| 👾 **MSX** | Retro MSX home computer palette |
 
 <p align="center">
   <img src="screenshots/11-cyberpunk.png" alt="Cyberpunk Theme" width="600">

@@ -142,6 +142,8 @@ theme = "dracula"  # Options below
 | `kanagawa` | Inspired by Katsushika Hokusai |
 | `everforest` | Comfortable green forest theme |
 | `cyberpunk` | Neon-soaked futuristic theme |
+| `midnight-commander` | Classic file manager theme |
+| `msx` | Retro MSX home computer palette |
 
 ---
 

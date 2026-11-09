@@ -5,7 +5,9 @@ use ratatui::{
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Line, Span},
-    widgets::{Block, BorderType, Borders, Clear, List, ListItem, Paragraph, Tabs, Wrap},
+    widgets::{
+        Block, BorderType, Borders, Clear, List, ListItem, ListState, Paragraph, Tabs, Wrap,
+    },
 };
 
 use super::state::{
@@ -842,7 +844,10 @@ fn render_theme_picker(frame: &mut Frame, state: &AppState) {
             .title_bottom(Line::from(" ↑↓ navigate │ ↵ apply │ Esc cancel ").centered()),
     );
 
-    frame.render_widget(theme_list, popup_area);
+    // Stateful render so the list scrolls to keep the selection visible when
+    // the popup is shorter than the theme list.
+    let mut list_state = ListState::default().with_selected(Some(state.theme_picker_index));
+    frame.render_stateful_widget(theme_list, popup_area, &mut list_state);
 }
 
 fn render_settings_dialog(frame: &mut Frame, state: &AppState) {
@@ -1755,4 +1760,88 @@ fn render_updating_overlay(frame: &mut Frame, state: &AppState) {
     );
 
     frame.render_widget(paragraph, popup_area);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::config::Config;
+    use ratatui::{Terminal, backend::TestBackend};
+    use ratatui_themes::ThemeName;
+
+    /// Render the whole UI into an in-memory terminal and return its text.
+    fn render_to_text(state: &AppState, width: u16, height: u16) -> String {
+        let mut terminal =
+            Terminal::new(TestBackend::new(width, height)).expect("test backend never fails");
+        terminal
+            .draw(|frame| render(frame, state))
+            .expect("drawing to a test backend never fails");
+        terminal
+            .backend()
+            .buffer()
+            .content()
+            .iter()
+            .map(|cell| cell.symbol())
+            .collect()
+    }
+
+    #[test]
+    fn theme_picker_should_show_selected_last_theme_on_a_standard_80x24_terminal() {
+        let mut state = AppState::new(Config::default(), Theme::default());
+        state.mode = Mode::ThemePicker;
+        state.theme_picker_index = Theme::all()
+            .iter()
+            .position(|&t| t == ThemeName::Msx)
+            .expect("ratatui-themes ships the MSX theme");
+
+        let screen = render_to_text(&state, 80, 24);
+
+        assert!(screen.contains("MSX"), "MSX row not visible:\n{screen}");
+    }
+
+    /// Text of the picker row for `theme` when it is the selected row.
+    fn selected_row(theme: ThemeName) -> String {
+        format!("▸ {}", theme.display_name())
+    }
+
+    /// Press `key` in the picker `steps` times, asserting after each press
+    /// that the selected theme's row is on screen.
+    fn assert_selection_visible_while_pressing(
+        state: &mut AppState,
+        key: crossterm::event::KeyCode,
+        steps: usize,
+        (width, height): (u16, u16),
+    ) {
+        use crossterm::event::{KeyEvent, KeyModifiers};
+
+        for _ in 0..steps {
+            super::super::events::handle_key(state, KeyEvent::new(key, KeyModifiers::NONE));
+            let selected = Theme::all()[state.theme_picker_index];
+            let screen = render_to_text(state, width, height);
+            assert!(
+                screen.contains(&selected_row(selected)),
+                "{selected} not visible at {width}x{height} after {key:?}:\n{screen}"
+            );
+        }
+    }
+
+    #[test]
+    fn theme_picker_should_keep_selected_theme_visible_while_navigating_down_and_up() {
+        use crossterm::event::KeyCode;
+
+        let len = Theme::all().len();
+        // 80x24 shows 14 of the 17 rows; 60x12 shows only 6.
+        for size in [(80, 24), (60, 12)] {
+            let mut state = AppState::new(Config::default(), Theme::default());
+            state.mode = Mode::ThemePicker;
+            state.theme_picker_index = 0;
+
+            // Down to the last theme, then wrap to the first.
+            assert_selection_visible_while_pressing(&mut state, KeyCode::Down, len, size);
+            assert_eq!(state.theme_picker_index, 0);
+            // Up wraps to the last theme, then walks back to the first.
+            assert_selection_visible_while_pressing(&mut state, KeyCode::Up, len, size);
+            assert_eq!(state.theme_picker_index, 0);
+        }
+    }
 }
