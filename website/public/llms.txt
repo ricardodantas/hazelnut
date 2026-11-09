@@ -36,7 +36,7 @@ Pre-built binaries available at: https://github.com/ricardodantas/hazelnut/relea
 - **Watch Folders**: Monitor directories for new and changed files in real-time
 - **Flexible Rules**: Match files by name (glob/regex), extension, size, age
 - **Smart Actions**: Move, copy, rename, archive, delete, or run custom scripts
-- **Beautiful TUI**: Manage rules and monitor activity with 15 color themes
+- **Beautiful TUI**: Manage rules and monitor activity with 17 color themes
 - **Background Daemon**: Runs quietly, processing files automatically
 - **Desktop Notifications**: Get alerted on errors (cross-platform: Linux, macOS, Windows)
 - **Auto-Update**: Built-in update checker with one-key update or `hazelnut update` CLI
@@ -130,12 +130,12 @@ Move and copy destinations support `{name}`, `{filename}`, `{ext}`, `{path}`, `{
 
 ## Themes
 
-15 themes available via ratatui-themes:
-- Catppuccin (Mocha, Latte, Frappé, Macchiato)
-- Dracula, Nord, Gruvbox Dark/Light
-- Tokyo Night, Monokai Pro
-- Solarized Dark/Light, One Dark
-- Everforest, Rosé Pine
+17 themes available via ratatui-themes:
+- Dracula (default), One Dark Pro, Nord
+- Catppuccin Mocha/Latte, Gruvbox Dark/Light
+- Tokyo Night, Solarized Dark/Light, Monokai Pro
+- Rosé Pine, Kanagawa, Everforest, Cyberpunk
+- Midnight Commander, MSX
 
 ## Keyboard Shortcuts (TUI)
 

@@ -3,19 +3,52 @@ import Layout from '../layouts/Layout.astro';
 
 const baseUrl = import.meta.env.BASE_URL;
 
+// Mirrors ratatui-themes 0.4.0: ThemeName::all() order, display_name(),
+// slug(), and palette colors [bg, accent, secondary, success, warning]
+// (the same swatches the TUI theme picker shows).
 const themes = [
   {
     name: 'Dracula',
     slug: 'dracula',
     description: 'A dark theme for vampires',
-    colors: ['#282a36', '#bd93f9', '#ff79c6', '#50fa7b', '#f1fa8c'],
+    colors: ['#282a36', '#bd93f9', '#ff79c6', '#50fa7b', '#ffb86c'],
     default: true
+  },
+  {
+    name: 'One Dark Pro',
+    slug: 'one-dark-pro',
+    description: 'Atom-inspired dark theme',
+    colors: ['#282c34', '#61afef', '#c678dd', '#98c379', '#e5c07b']
   },
   {
     name: 'Nord',
     slug: 'nord',
     description: 'An arctic, north-bluish color palette',
-    colors: ['#2e3440', '#81a1c1', '#88c0d0', '#a3be8c', '#ebcb8b']
+    colors: ['#2e3440', '#88c0d0', '#81a1c1', '#a3be8c', '#ebcb8b']
+  },
+  {
+    name: 'Catppuccin Mocha',
+    slug: 'catppuccin-mocha',
+    description: 'Soothing pastel theme for the high-spirited',
+    colors: ['#1e1e2e', '#89b4fa', '#f5c2e7', '#a6e3a1', '#f9e2af']
+  },
+  {
+    name: 'Catppuccin Latte',
+    slug: 'catppuccin-latte',
+    description: 'Warm pastel light theme',
+    colors: ['#eff1f5', '#1e66f5', '#ea76cb', '#40a02b', '#df8e1d']
+  },
+  {
+    name: 'Gruvbox Dark',
+    slug: 'gruvbox-dark',
+    description: 'Retro groove color scheme',
+    colors: ['#282828', '#fabd2f', '#d3869b', '#b8bb26', '#fe8019']
+  },
+  {
+    name: 'Gruvbox Light',
+    slug: 'gruvbox-light',
+    description: 'Retro groove, light variant',
+    colors: ['#fbf1c7', '#b57614', '#8f3f71', '#79740e', '#af3a03']
   },
   {
     name: 'Tokyo Night',
@@ -24,76 +57,58 @@ const themes = [
     colors: ['#1a1b26', '#7aa2f7', '#bb9af7', '#9ece6a', '#e0af68']
   },
   {
-    name: 'Gruvbox Dark',
-    slug: 'gruvbox-dark',
-    description: 'Retro groove color scheme',
-    colors: ['#282828', '#fabd2f', '#b8bb26', '#fb4934', '#83a598']
-  },
-  {
-    name: 'Catppuccin Mocha',
-    slug: 'catppuccin-mocha',
-    description: 'Soothing pastel theme for the high-spirited',
-    colors: ['#1e1e2e', '#cba6f7', '#f5c2e7', '#a6e3a1', '#f9e2af']
-  },
-  {
-    name: 'One Dark',
-    slug: 'one-dark',
-    description: 'Atom-inspired dark theme',
-    colors: ['#282c34', '#61afef', '#c678dd', '#98c379', '#e5c07b']
-  },
-  {
     name: 'Solarized Dark',
     slug: 'solarized-dark',
     description: 'Precision colors for machines and people',
-    colors: ['#002b36', '#268bd2', '#d33682', '#859900', '#b58900']
+    colors: ['#002b36', '#268bd2', '#6c71c4', '#859900', '#b58900']
   },
   {
-    name: 'Monokai',
-    slug: 'monokai',
-    description: 'Classic Sublime Text colors',
-    colors: ['#272822', '#66d9ef', '#f92672', '#a6e22e', '#e6db74']
+    name: 'Solarized Light',
+    slug: 'solarized-light',
+    description: 'Precision colors, light variant',
+    colors: ['#fdf6e3', '#268bd2', '#6c71c4', '#859900', '#b58900']
   },
   {
-    name: 'Rose Pine',
+    name: 'Monokai Pro',
+    slug: 'monokai-pro',
+    description: 'Classic syntax highlighting colors',
+    colors: ['#2d2a2e', '#ffd866', '#ab9df2', '#a9dc76', '#fc9867']
+  },
+  {
+    name: 'Rosé Pine',
     slug: 'rose-pine',
     description: 'All natural pine, faux fur and a bit of soho vibes',
-    colors: ['#191724', '#c4a7e7', '#ebbcba', '#31748f', '#f6c177']
-  },
-  {
-    name: 'Cyberpunk',
-    slug: 'cyberpunk',
-    description: 'Neon-soaked night city aesthetic',
-    colors: ['#0d0d1a', '#00ffff', '#ff00ff', '#00ff00', '#ffff00']
-  },
-  {
-    name: 'Everforest',
-    slug: 'everforest',
-    description: 'Comfortable and pleasant green forest theme',
-    colors: ['#2d353b', '#a7c080', '#83c092', '#7fbbb3', '#dbbc7f']
+    colors: ['#191724', '#ebbcba', '#c4a7e7', '#9ccfd8', '#f6c177']
   },
   {
     name: 'Kanagawa',
     slug: 'kanagawa',
     description: 'Inspired by the colors of the famous wave painting',
-    colors: ['#1f1f28', '#7e9cd8', '#957fb8', '#98bb6c', '#e6c384']
+    colors: ['#1f1f28', '#7fb4ca', '#957fb8', '#76946a', '#ffa96b']
   },
   {
-    name: 'Ayu Dark',
-    slug: 'ayu-dark',
-    description: 'Simple, bright colors with a modern feel',
-    colors: ['#0a0e14', '#39bae6', '#c2d94c', '#ff8f40', '#f29668']
+    name: 'Everforest',
+    slug: 'everforest',
+    description: 'Comfortable and pleasant green forest theme',
+    colors: ['#2f3537', '#83c178', '#d699b6', '#a7c080', '#dbbc7f']
   },
   {
-    name: 'Material Ocean',
-    slug: 'material-ocean',
-    description: 'Material design inspired ocean theme',
-    colors: ['#0f111a', '#82aaff', '#c792ea', '#c3e88d', '#ffcb6b']
+    name: 'Cyberpunk',
+    slug: 'cyberpunk',
+    description: 'Neon-soaked night city aesthetic',
+    colors: ['#0d0221', '#00ffff', '#ff00ff', '#00ff64', '#ffe600']
   },
   {
-    name: 'Nightfox',
-    slug: 'nightfox',
-    description: 'A soft dark theme with vibrant colors',
-    colors: ['#192330', '#719cd6', '#9d79d6', '#81b29a', '#dbc074']
+    name: 'Midnight Commander',
+    slug: 'midnight-commander',
+    description: 'Classic file manager theme',
+    colors: ['#0000aa', '#00aaaa', '#00ff00', '#00ff00', '#ffaa00']
+  },
+  {
+    name: 'MSX',
+    slug: 'msx',
+    description: 'Retro MSX home computer palette',
+    colors: ['#5955e0', '#65dbef', '#74d07d', '#3eb849', '#ded087']
   }
 ];
 ---
@@ -102,7 +117,7 @@ const themes = [
   <section class="themes-page">
     <div class="themes-header">
       <h1>🎨 Themes</h1>
-      <p>Hazelnut comes with 15 beautiful color schemes to match your style.</p>
+      <p>Hazelnut comes with 17 beautiful color schemes to match your style.</p>
       <p class="hint">Press <kbd>t</kbd> in the TUI to open the theme picker.</p>
     </div>
     
