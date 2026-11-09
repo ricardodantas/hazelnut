@@ -78,9 +78,13 @@ fn default_true() -> bool {
 }
 
 impl Action {
-    /// Execute this action on a file
-    pub fn execute(&self, path: &Path) -> Result<()> {
-        match self {
+    /// Execute this action on a file.
+    ///
+    /// Returns the path this action created (the move, copy, rename or archive
+    /// destination), or `None` when it created nothing. A move or copy whose
+    /// destination is the file itself does nothing and returns `None`.
+    pub fn execute(&self, path: &Path) -> Result<Option<PathBuf>> {
+        let created = match self {
             Action::Move {
                 destination,
                 create_destination,
@@ -96,6 +100,11 @@ impl Action {
 
                 let filename = path.file_name().context("File has no name")?;
                 let dest_path = dest.join(filename);
+
+                if is_same_file(path, &dest_path) {
+                    debug!("Already in destination: {}", path.display());
+                    return Ok(None);
+                }
 
                 if dest_path.exists() && !overwrite {
                     anyhow::bail!(
@@ -131,6 +140,7 @@ impl Action {
                         })?;
                     }
                 }
+                Some(dest_path)
             }
 
             Action::Copy {
@@ -147,6 +157,12 @@ impl Action {
                 let filename = path.file_name().context("File has no name")?;
                 let dest_path = dest.join(filename);
 
+                // Copying a file onto itself would truncate it
+                if is_same_file(path, &dest_path) {
+                    debug!("Already in destination: {}", path.display());
+                    return Ok(None);
+                }
+
                 if dest_path.exists() && !overwrite {
                     anyhow::bail!(
                         "Destination exists and overwrite is false: {}",
@@ -156,6 +172,7 @@ impl Action {
 
                 info!("Copying {} -> {}", path.display(), dest_path.display());
                 std::fs::copy(path, &dest_path)?;
+                Some(dest_path)
             }
 
             Action::Rename { pattern } => {
@@ -164,6 +181,7 @@ impl Action {
 
                 info!("Renaming {} -> {}", path.display(), new_path.display());
                 std::fs::rename(path, &new_path)?;
+                Some(new_path)
             }
 
             Action::Trash => {
@@ -213,6 +231,7 @@ impl Action {
                         std::fs::remove_file(path)?;
                     }
                 }
+                None
             }
 
             Action::Delete => {
@@ -222,6 +241,7 @@ impl Action {
                 } else {
                     std::fs::remove_file(path)?;
                 }
+                None
             }
 
             Action::Run { command, args } => {
@@ -360,6 +380,7 @@ impl Action {
                         anyhow::bail!("Command failed with status: {}", status);
                     }
                 }
+                None
             }
 
             Action::Archive {
@@ -435,14 +456,36 @@ impl Action {
                         std::fs::remove_file(path)?;
                     }
                 }
+                Some(archive_path)
             }
 
             Action::Nothing => {
                 debug!("No action for {}", path.display());
+                None
             }
-        }
+        };
 
-        Ok(())
+        Ok(created)
+    }
+}
+
+/// Whether `a` and `b` are the same existing file (same inode on Unix, so hard links
+/// and differently spelled paths to one file compare equal).
+fn is_same_file(a: &Path, b: &Path) -> bool {
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::MetadataExt;
+        match (std::fs::metadata(a), std::fs::metadata(b)) {
+            (Ok(a), Ok(b)) => a.dev() == b.dev() && a.ino() == b.ino(),
+            _ => false,
+        }
+    }
+    #[cfg(not(unix))]
+    {
+        match (std::fs::canonicalize(a), std::fs::canonicalize(b)) {
+            (Ok(a), Ok(b)) => a == b,
+            _ => false,
+        }
     }
 }
 
@@ -654,5 +697,75 @@ mod tests {
             fs::read_to_string(destination.join("report.txt")).unwrap(),
             "existing contents"
         );
+    }
+
+    #[test]
+    fn move_should_return_the_path_it_created() {
+        let temp = tempfile::tempdir().unwrap();
+        let source = temp.path().join("report.txt");
+        fs::write(&source, "report contents").unwrap();
+
+        let created = Action::Move {
+            destination: temp.path().join("sorted"),
+            create_destination: true,
+            overwrite: false,
+        }
+        .execute(&source)
+        .unwrap();
+
+        assert_eq!(created, Some(temp.path().join("sorted").join("report.txt")));
+    }
+
+    #[test]
+    fn move_into_the_folder_the_file_is_already_in_should_do_nothing() {
+        let temp = tempfile::tempdir().unwrap();
+        let sorted = temp.path().join("sorted").join("txt");
+        fs::create_dir_all(&sorted).unwrap();
+        let file = sorted.join("report.txt");
+        fs::write(&file, "report contents").unwrap();
+
+        let created = Action::Move {
+            destination: temp.path().join("sorted").join("{ext}"),
+            create_destination: true,
+            overwrite: false,
+        }
+        .execute(&file)
+        .unwrap();
+
+        assert_eq!(created, None);
+        assert_eq!(fs::read_to_string(&file).unwrap(), "report contents");
+    }
+
+    #[test]
+    fn copy_onto_itself_with_overwrite_should_keep_the_contents() {
+        let temp = tempfile::tempdir().unwrap();
+        let file = temp.path().join("report.txt");
+        fs::write(&file, "report contents").unwrap();
+
+        let created = Action::Copy {
+            destination: temp.path().to_path_buf(),
+            create_destination: true,
+            overwrite: true,
+        }
+        .execute(&file)
+        .unwrap();
+
+        assert_eq!(created, None);
+        assert_eq!(fs::read_to_string(&file).unwrap(), "report contents");
+    }
+
+    #[test]
+    fn rename_should_return_the_new_path() {
+        let temp = tempfile::tempdir().unwrap();
+        let source = temp.path().join("report.txt");
+        fs::write(&source, "report contents").unwrap();
+
+        let created = Action::Rename {
+            pattern: "{name}-done.{ext}".to_string(),
+        }
+        .execute(&source)
+        .unwrap();
+
+        assert_eq!(created, Some(temp.path().join("report-done.txt")));
     }
 }

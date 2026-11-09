@@ -6,7 +6,7 @@ mod engine;
 
 pub use action::Action;
 pub use condition::Condition;
-pub use engine::RuleEngine;
+pub use engine::{Applied, RuleEngine};
 
 use serde::{Deserialize, Serialize};
 
