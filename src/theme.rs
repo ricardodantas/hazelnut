@@ -285,3 +285,59 @@ impl ThemeColors {
             .add_modifier(Modifier::BOLD)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::config::Config;
+
+    /// Resolve the theme a config file with `theme = "<slug>"` would use.
+    fn theme_from_config(slug: &str) -> ThemeName {
+        let toml = format!("[general]\ntheme = \"{slug}\"\n");
+        let config: Config = toml::from_str(&toml).expect("test config is valid TOML");
+        Theme::load(&config).inner()
+    }
+
+    #[test]
+    fn load_should_select_msx_from_config() {
+        assert_eq!(theme_from_config("msx"), ThemeName::Msx);
+    }
+
+    #[test]
+    fn load_should_select_midnight_commander_from_config() {
+        assert_eq!(
+            theme_from_config("midnight-commander"),
+            ThemeName::MidnightCommander
+        );
+    }
+
+    #[test]
+    fn load_should_keep_theme_slugs_saved_by_earlier_releases() {
+        // Slugs hazelnut wrote to config files before ratatui-themes 0.4.
+        let earlier = [
+            ("dracula", ThemeName::Dracula),
+            ("one-dark-pro", ThemeName::OneDarkPro),
+            ("nord", ThemeName::Nord),
+            ("catppuccin-mocha", ThemeName::CatppuccinMocha),
+            ("catppuccin-latte", ThemeName::CatppuccinLatte),
+            ("gruvbox-dark", ThemeName::GruvboxDark),
+            ("gruvbox-light", ThemeName::GruvboxLight),
+            ("tokyo-night", ThemeName::TokyoNight),
+            ("solarized-dark", ThemeName::SolarizedDark),
+            ("solarized-light", ThemeName::SolarizedLight),
+            ("monokai-pro", ThemeName::MonokaiPro),
+            ("rose-pine", ThemeName::RosePine),
+            ("kanagawa", ThemeName::Kanagawa),
+            ("everforest", ThemeName::Everforest),
+            ("cyberpunk", ThemeName::Cyberpunk),
+        ];
+
+        let resolved: Vec<_> = earlier
+            .iter()
+            .map(|&(slug, _)| (slug, theme_from_config(slug)))
+            .collect();
+
+        let expected: Vec<_> = earlier.to_vec();
+        assert_eq!(resolved, expected);
+    }
+}
